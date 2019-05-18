@@ -113,8 +113,7 @@ var ՐՏ_modules = {};
 ՐՏ_modules["asset.cm_rapydscript"] = {};
 ՐՏ_modules["store.editor"] = {};
 ՐՏ_modules["store.explorer"] = {};
-ՐՏ_modules["api"] = {};
-ՐՏ_modules["api.server"] = {};
+ՐՏ_modules["server"] = {};
 ՐՏ_modules["app_menu"] = {};
 ՐՏ_modules["store.root"] = {};
 
@@ -1194,7 +1193,7 @@ var ՐՏ_modules = {};
 (function(){
     var __name__ = "components.editor";
     var templ_editor, vc;
-    templ_editor = "\n<div>\n    <ul  class = 'doc_tabs'>\n        <li  v-for = 'doc, doc_k in doc_infos' :key = 'doc_k' :class = \"{active: doc_num == doc_k}\">\n            <span  @click = '(swap_doc(doc_k), edit_focus())'>\n                {{doc.name}}\n            </span>\n            <i  class = 'fa fa-close' @click = 'close(doc_k)' :style = '{color: doc.is_saved ? null : \"red\"}' :title = 'doc.is_saved ? null : \"not saved\"'></i>\n        </li>\n    </ul>\n    <div  v-if = '!doc_num' class = 'editor_welcome'>\n        <div>\n            <h2  style = 'background-color: white'>\n                <span  style = 'color: #42b983;'>Vue</span>\n                <span  class = 'v2p_char' style = 'color: black;'>3</span>\n                <span  class = 'v2p_char' style = 'color: #006ea5;'>p</span>\n                <span  class = 'v2p_char' style = 'color: #bfa03b;'>y</span>\n                <i  class = 'v2p_char' style = 'color: #b00;'>j</i>\n            </h2>\n        </div>\n    </div>\n    <div  v-show = 'doc_num' class = 'editor_up_bar'>\n        <div  class = 'left'>\n            <span  class = 'doc_title'>{{doc_num && doc_info.name || \"\"}}</span>\n            <span>ln: {{cursor.line+1}} col: {{cursor.ch}}</span>\n        </div>\n        <div  class = 'right'>\n            <span>{{doc_path}}</span>\n        </div>\n    </div>\n    <div  v-show = 'doc_num' style = 'position:fixed; left:0; top:140px; bottom:0px; width:100%;'>\n        <div  style = 'position: absolute; top:0px; bottom:50px; width:100%; padding: 0 10px;'>\n            <div  ref = 'cm_el' style = 'height:100%;'></div>\n        </div>\n        <div  style = 'position:fixed; bottom:0px; height:45px;'>\n            <div  v-if = 'error' @click = 'go_error' style = 'cursor:pointer;'>\n                <div>\n                    File: {{error.filename}}\n                </div>\n                <template  v-if = 'error.readfile_error'>\n                    {{error.message}} {{error.readfile_error.line}}:{{error.readfile_error.col}}\n                </template>\n                <template  v-else>\n                    {{error.message}} {{error.line}}:{{error.col}}\n                </template>\n                <div>{{error.stack}}</div>\n            </div>\n            <div  v-else>ok</div>\n        </div>\n    </div>\n</div>\n";
+    templ_editor = "\n<div>\n    <ul  class = 'doc_tabs'>\n        <li  v-for = 'doc, doc_k in doc_infos' :key = 'doc_k' :class = \"{active: doc_num == doc_k}\">\n            <span  @click = '(swap_doc(doc_k), edit_focus())'>\n                {{doc.name}}\n            </span>\n            <i  class = 'fa fa-close' @click = 'close(doc_k)' :style = '{color: doc.is_saved ? null : \"red\"}' :title = 'doc.is_saved ? null : \"not saved\"'></i>\n        </li>\n    </ul>\n    <div  v-if = '!doc_num' class = 'editor_welcome'>\n        <div>\n            <h2  style = 'background-color: white'>\n                <span  style = 'color: #42b983;'>Vue</span>\n                <span  class = 'v2p_char' style = 'color: black;'>{{w23p_ver}}</span>\n                <span  class = 'v2p_char' style = 'color: #006ea5;'>p</span>\n                <span  class = 'v2p_char' style = 'color: #bfa03b;'>y</span>\n                <i  class = 'v2p_char' style = 'color: #b00;'>j</i>\n            </h2>\n        </div>\n    </div>\n    <div  v-show = 'doc_num' class = 'editor_up_bar'>\n        <div  class = 'left'>\n            <span  class = 'doc_title'>{{doc_num && doc_info.name || \"\"}}</span>\n            <span>ln: {{cursor.line+1}} col: {{cursor.ch}}</span>\n        </div>\n        <div  class = 'right'>\n            <span>{{doc_path}}</span>\n        </div>\n    </div>\n    <div  v-show = 'doc_num' style = 'position:fixed; left:0; top:140px; bottom:0px; width:100%;'>\n        <div  style = 'position: absolute; top:0px; bottom:50px; width:100%; padding: 0 10px;'>\n            <div  ref = 'cm_el' style = 'height:100%;'></div>\n        </div>\n        <div  style = 'position:fixed; bottom:0px; height:45px;'>\n            <div  v-if = 'error' @click = 'go_error' style = 'cursor:pointer;'>\n                <div>\n                    File: {{error.filename}}\n                </div>\n                <template  v-if = 'error.readfile_error'>\n                    {{error.message}} {{error.readfile_error.line}}:{{error.readfile_error.col}}\n                </template>\n                <template  v-else>\n                    {{error.message}} {{error.line}}:{{error.col}}\n                </template>\n                <div>{{error.stack}}</div>\n            </div>\n            <div  v-else>ok</div>\n        </div>\n    </div>\n</div>\n";
     var v_meth = ՐՏ_modules["asset.rs_vue"].v_meth;
     var v_computed = ՐՏ_modules["asset.rs_vue"].v_computed;
     var v_watch = ՐՏ_modules["asset.rs_vue"].v_watch;
@@ -1214,7 +1213,8 @@ var ՐՏ_modules = {};
                 set_active_window: "/editor.set_active_window~",
                 mount_cm: "/editor.mount_cm*",
                 swap_doc: "/editor.swap_doc*",
-                close: "/editor.close*"
+                close: "/editor.close*",
+                web23py: "web23py"
             };
         }
         _init_data () {
@@ -1228,6 +1228,10 @@ var ՐՏ_modules = {};
                 error: null
             };
             return ret;
+        }
+        w23p_ver () {
+            var self = this;
+            return /^.+(\d)/.exec(self.web23py)[1];
         }
         doc_num () {
             var self = this;
@@ -1290,6 +1294,11 @@ var ՐՏ_modules = {};
         }
     }, (function(){
         Object.defineProperties(ՐՏ_3.prototype, {
+            w23p_ver: {
+                enumerable: false, 
+                writable: true, 
+                value: vc.computed(ՐՏ_3.prototype.w23p_ver)
+            },
             doc_num: {
                 enumerable: false, 
                 writable: true, 
@@ -1504,7 +1513,7 @@ var ՐՏ_modules = {};
             super(vc);
             var self = this;
             self.map_store = {
-                w3p_app: "w3p_app"
+                w23p_app: "w23p_app"
             };
             self.template = templ_menu;
             self.props = {
@@ -3876,18 +3885,9 @@ var ՐՏ_modules = {};
 
 (function(){
     var __name__ = "asset.vuepy_output";
-    var output_path_map;
     var fs_path = ՐՏ_modules["asset.fs_path"];
     
-    output_path_map = {
-        "html": function(pth) {
-            return "/templates/" + pth.split(/\//).filter(function(x) {
-                return x && x !== "root";
-            }).slice(1).join("/") + ".html";
-        },
-        "js": "/static/js/",
-        "css": "/static/css/"
-    };
+    "\noutput_path_map = {\n    'html': def(pth): return '/templates/' +                 pth.split(///).filter(def(x): return x and x != 'root';)[1:].join('/') + '.html';,\n    'js': '/static/js/',\n    'css': '/static/css/',\n }\n";
     function update_css(css, frags_to_update) {
         var ՐՏitr44, ՐՏidx44;
         var stored_frags, css_head, updated_frags, out, stored_by, section;
@@ -3940,7 +3940,7 @@ var ՐՏ_modules = {};
     }, Object.defineProperty(ՐՏ_24, "__doc__", {
         value: "css_to_store is a hash:\n    'a.css' :\n        'foo.vuepy': \"a { color: black } ...\"\n        'bar.vuepy': \"div.error { color: red } ...\"\n        ...\n    ..."
     }), ՐՏ_24);
-    function output(compiled, fs) {
+    function output(compiled, fs, output_path_map) {
         var ՐՏitr46, ՐՏidx46;
         var fp, ps, ext, ofp, opath, fid;
         fp = compiled.src;
@@ -3971,8 +3971,6 @@ var ՐՏ_modules = {};
             }
         }
     }
-    ՐՏ_modules["asset.vuepy_output"]["output_path_map"] = output_path_map;
-
     ՐՏ_modules["asset.vuepy_output"]["update_css"] = update_css;
 
     ՐՏ_modules["asset.vuepy_output"]["store_css"] = store_css;
@@ -5892,14 +5890,8 @@ var ՐՏ_modules = {};
 })();
 
 (function(){
-    var __name__ = "api";
-
-    ՐՏ_modules["api"]["server"] = ՐՏ_modules["api.server"];
-})();
-
-(function(){
-    var __name__ = "api.server";
-    class Server_w3p_json {
+    var __name__ = "server";
+    class API {
         constructor (axios, baseURL, bus) {
             var self = this;
             self.bus = bus;
@@ -5914,12 +5906,12 @@ var ՐՏ_modules = {};
         }
         call (meth, f, args, vars) {
             var self = this;
-            var fargs, ret;
+            var ret;
+            args = args || [];
             if (meth === "get") {
                 if (Array.isArray(args)) {
-                    fargs = args.slice(0);
-                    fargs.unshift(f);
-                    f = fargs.join("/");
+                    args.unshift(f);
+                    f = args.join("/");
                     args = void 0;
                     if (vars && !vars.params) {
                         vars = {
@@ -5971,19 +5963,7 @@ var ՐՏ_modules = {};
             }
         }
     }
-    class Server {
-        constructor (axios, appURL, bus) {
-            var self = this;
-            self.__config__ = {
-                appURL: appURL,
-                bus: bus
-            };
-            self.default = new Server_w3p_json(axios, appURL, bus);
-        }
-    }
-    ՐՏ_modules["api.server"]["Server_w3p_json"] = Server_w3p_json;
-
-    ՐՏ_modules["api.server"]["Server"] = Server;
+    ՐՏ_modules["server"]["API"] = API;
 })();
 
 (function(){
@@ -6000,7 +5980,7 @@ var ՐՏ_modules = {};
                 label: '<i class = "fa fa-power-off"></i>',
                 href: "#cmd:select_app"
             }, {
-                label: "${w3p_app}",
+                label: "${w23p_app}",
                 href: "#cmd:toggle_explorer"
             }, {
                 label: "Save",
@@ -6026,7 +6006,7 @@ var ՐՏ_modules = {};
                 slot: "flash"
             }, {
                 label: "Errors",
-                href: "../../admin/default/errors/${w3p_app}",
+                href: "../../admin/default/errors/${w23p_app}",
                 attrs: {
                     target: "_blank",
                     rel: "noopener"
@@ -6128,7 +6108,7 @@ var ՐՏ_modules = {};
     var editor = ՐՏ_modules["store.editor"];
     var explorer = ՐՏ_modules["store.explorer"];
     
-    var server = ՐՏ_modules["api.server"];
+    var server = ՐՏ_modules["server"];
     
     var app_menu = ՐՏ_modules["app_menu"];
     
@@ -6144,8 +6124,9 @@ var ՐՏ_modules = {};
             },
             is_busy: true,
             menus: app_menu.get_factory().default(),
-            w3p_app: null,
-            w3p_app_list: null,
+            web23py: null,
+            w23p_app: null,
+            w23p_app_list: null,
             get_fs: null,
             get_CM: null,
             show_explorer: false,
@@ -6199,9 +6180,9 @@ var ՐՏ_modules = {};
             onoff = onoff === void 0 ? !self.state.show_explorer : onoff;
             self.state.show_explorer = onoff;
         }
-        set_w3p_app (w3p_app) {
+        set_w23p_app (w23p_app) {
             var self = this;
-            self.state.w3p_app = w3p_app;
+            self.state.w23p_app = w23p_app;
         }
         flash (msg, status) {
             var self = this;
@@ -6253,10 +6234,10 @@ var ՐՏ_modules = {};
                 writable: true, 
                 value: vc.mutation(ՐՏ_58.prototype.toggle_explorer)
             },
-            set_w3p_app: {
+            set_w23p_app: {
                 enumerable: false, 
                 writable: true, 
-                value: vc.mutation(ՐՏ_58.prototype.set_w3p_app)
+                value: vc.mutation(ՐՏ_58.prototype.set_w23p_app)
             },
             flash: {
                 enumerable: false, 
@@ -6267,15 +6248,17 @@ var ՐՏ_modules = {};
         ;
     })(), ՐՏ_58);
     var Store = (ՐՏ_59 = class Store extends RS_store {
-        constructor (rs_req) {
+        constructor (rs_req, web23py) {
             super();
             var self = this;
-            var self_app, fs_refresher;
+            var self_app, api_baseURL, html_dir, fs_refresher;
             self.state_api = new State(self.vue, self.getter_factory.bind(self));
+            self.state_api.state.web23py = web23py;
             self.actions = vc._actions;
             self_app = window.location.pathname.split("/", 2)[1];
             self.api = {};
-            self.api.server = new server.Server(rs_req.get("axios.min"), "/" + self_app, self.$bus);
+            api_baseURL = web23py === "web3py" ? self_app : self_app + "/default/call/json";
+            self.api.server = new server.API(rs_req.get("axios.min"), "/" + api_baseURL, self.$bus);
             self.api.fs = new FS();
             self.api.CM = rs_req.get("codemirror/lib/codemirror");
             self.state_api.state.get_fs = function() {
@@ -6283,6 +6266,20 @@ var ՐՏ_modules = {};
             };
             self.state_api.state.get_CM = function() {
                 return self.api.CM;
+            };
+            html_dir = {
+                "web2py": "/views",
+                "web3py": "/templates"
+            };
+            self.output_path_map = {
+                "html": function(pth) {
+                    pth = pth.split("/");
+                    pth[0] === "root" || !pth[0] && pth.shift();
+                    pth[0] = html_dir[web23py];
+                    return pth.join("/") + ".html";
+                },
+                "js": "/static/js/",
+                "css": "/static/css/"
             };
             self.mount_module(new editor.Store(self), "editor");
             self.mount_module(new explorer.Store(self), "explorer");
@@ -6305,8 +6302,8 @@ var ՐՏ_modules = {};
                 fdata.path = fs.path_by_id(fid).path;
                 fdata.content = fdata.obj.content;
                 delete fdata.obj;
-                fdata.w3p_app = self.get("w3p_app");
-                self.api.server.default.post(cmd, {
+                fdata.w23p_app = self.get("w23p_app");
+                self.api.server.post(cmd, {
                     fdata: fdata
                 }).then(function(resp) {
                     var e;
@@ -6342,9 +6339,9 @@ var ՐՏ_modules = {};
             }
             return ret;
         }
-        *w3p_app_list () {
+        *w23p_app_list () {
             var self = this;
-            self.state_api.state.w3p_app_list = (yield self.api.server.default.get("app_list", [])).data.app_list;
+            self.state_api.state.w23p_app_list = (yield self.api.server.get("app_list")).data.app_list;
         }
         flash () {
             var self = this;
@@ -6381,25 +6378,25 @@ var ՐՏ_modules = {};
                 self.dispatch("/editor.close_all");
             }
         }
-        *load_fs_from_srv (w3p_app) {
+        *load_fs_from_srv (w23p_app) {
             var self = this;
             var fs, ret;
             fs = self.api.fs;
             self.commit("toggle_busy", true);
             try {
-                ret = (yield self.api.server.default.get("get_fs", [ w3p_app ]));
+                ret = (yield self.api.server.get("get_fs", [ w23p_app ]));
             } catch (ՐՏ_Exception) {
                 var err = ՐՏ_Exception;
             }
-            self.dispatch("load_fs", ret.data, w3p_app);
+            self.dispatch("load_fs", ret.data, w23p_app);
             self.commit("toggle_busy", false);
             return ret;
         }
-        load_fs (data, w3p_app) {
+        load_fs (data, w23p_app) {
             var self = this;
             self.api.fs.loads(data);
-            self.commit("set_w3p_app", w3p_app);
-            self.$emit("fs_restored", w3p_app);
+            self.commit("set_w23p_app", w23p_app);
+            self.$emit("fs_restored", w23p_app);
         }
         start_modal (inner, args) {
             var self = this;
@@ -6428,10 +6425,10 @@ var ՐՏ_modules = {};
             var self = this;
             var app;
             self.commit("toggle_busy", true);
-            yield self.dispatch("w3p_app_list");
+            yield self.dispatch("w23p_app_list");
             self.commit("toggle_busy", false);
             app = yield self.dispatch("start_modal", "app_selector", {
-                app_list: self.get("w3p_app_list")
+                app_list: self.get("w23p_app_list")
             });
             if (app !== "cancel") {
                 self.dispatch("/editor.close_all");
@@ -6466,7 +6463,7 @@ var ՐՏ_modules = {};
                 off = fs.on("write_file", function(fid) {
                     self.dispatch("/editor.reload", fid);
                 });
-                vuepy_output.output(compiled, self.api.fs);
+                vuepy_output.output(compiled, self.api.fs, self.output_path_map);
                 off();
                 self.$emit("fs_changed");
             }
@@ -6474,10 +6471,10 @@ var ՐՏ_modules = {};
         }
     }, (function(){
         Object.defineProperties(ՐՏ_59.prototype, {
-            w3p_app_list: {
+            w23p_app_list: {
                 enumerable: false, 
                 writable: true, 
-                value: vc.action(asyncer(ՐՏ_59.prototype.w3p_app_list))
+                value: vc.action(asyncer(ՐՏ_59.prototype.w23p_app_list))
             },
             menu_click: {
                 enumerable: false, 
@@ -6533,7 +6530,7 @@ var ՐՏ_modules = {};
     var __name__ = "__main__";
 
     var ՐՏ_60;
-    var app_templ, vc;
+    var app_templ, web23py, vc;
     app_templ = "\n<div>\n    <layout>\n        <div  style = 'width:100%; padding: 0 10px;'>\n            <modal></modal>\n            <div  v-show = 'show_explorer' class = 'explorer'>\n                <folder_content></folder_content>\n            </div>\n            <editor></editor>\n        </div>\n    </layout>\n</div>\n";
     var v_meth = ՐՏ_modules["asset.rs_vue"].v_meth;
     var v_computed = ՐՏ_modules["asset.rs_vue"].v_computed;
@@ -6554,15 +6551,14 @@ var ՐՏ_modules = {};
     
     var Store = ՐՏ_modules["store.root"].Store;
     
-    var Server = ՐՏ_modules["api.server"].Server;
-    
     Vue.use(Store);
     Vue.options.components = {
         confirm: confirm.make(),
         error: cerror.make(),
         app_selector: app_selector.make()
     };
-    window.store = new Store(rs_req);
+    web23py = document.getElementsByTagName("meta")[0].dataset.web23py;
+    window.store = new Store(rs_req, web23py);
     vc = new V_collector();
     var App = (ՐՏ_60 = class App extends RS_vue {
         constructor () {
@@ -6572,7 +6568,7 @@ var ՐՏ_modules = {};
             self.template = app_templ;
             self.map_store = {
                 show_explorer: "show_explorer",
-                w3p_app: "w3p_app"
+                w23p_app: "w23p_app"
             };
             self.components = {
                 folder_content: folder_content.make(),
@@ -6588,11 +6584,11 @@ var ՐՏ_modules = {};
         *mounted () {
             var self = this;
             var app2edit;
-            yield store.dispatch("w3p_app_list");
+            yield store.dispatch("w23p_app_list");
             store.commit("toggle_busy", false);
-            while (!self.w3p_app) {
+            while (!self.w23p_app) {
                 app2edit = yield store.dispatch("start_modal", "app_selector", {
-                    app_list: store.get("w3p_app_list")
+                    app_list: store.get("w23p_app_list")
                 });
                 if (app2edit !== "cancel") {
                     yield store.dispatch("load_fs_from_srv", app2edit);

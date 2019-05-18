@@ -202,26 +202,34 @@ var ՐՏ_modules = {};
             args: void 0
         };
         function pret(ok, err) {
-            function inner(f, ret_v) {
+            function inner(f, ret_v, ret_throw) {
                 var v;
-                try {
-                    f = f || fun.apply(ctx.self, ctx.args);
-                    v = f.next(ret_v);
-                } catch (ՐՏ_Exception) {
-                    var e = ՐՏ_Exception;
-                    err(e);
+                if (ret_throw) {
+                    v = ret_throw;
+                } else {
+                    try {
+                        f = f || fun.apply(ctx.self, ctx.args);
+                        v = f.next(ret_v);
+                    } catch (ՐՏ_Exception) {
+                        var e = ՐՏ_Exception;
+                        err(e);
+                        return;
+                    }
                 }
                 if (!v.done) {
                     if (v.value instanceof Promise) {
                         v.value.then(function(ret_v) {
                             inner(f, ret_v);
                         }, function(e) {
+                            var v;
                             try {
-                                f.throw(e);
+                                v = f.throw(e);
                             } catch (ՐՏ_Exception) {
                                 var e = ՐՏ_Exception;
                                 err(e);
+                                return;
                             }
+                            inner(f, null, v);
                         });
                     } else {
                         Promise.resolve(v.value).then(function(ret_v) {

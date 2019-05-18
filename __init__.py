@@ -13,7 +13,7 @@ cache = Cache(size=1000)
 @action('index')         # the function below is exposed as a GET action
 @action.uses('index.html')          # we use the template index.html to render it
 def index():
-    return dict(a=1)
+    return dict(web23py='web3py', title = 'Vue3pyj')
 
 APPS_FOLDER = os.path.normpath(os.path.dirname(os.path.dirname( __file__)))
 
@@ -22,8 +22,8 @@ def app_list():
     return dict(app_list = next(os.walk(APPS_FOLDER))[1])
 
 
-@action('get_fs/<w3p_app>')
-def get_fs(w3p_app = None):
+@action('get_fs/<w23p_app>')
+def get_fs(w23p_app = None):
     dir_list = {
         'controllers':None,
         'static': {
@@ -36,15 +36,15 @@ def get_fs(w3p_app = None):
         'templates':None,
         'vuepy':None,
     }
-    app_folder = os.path.join(APPS_FOLDER, w3p_app) if w3p_app else os.path.normpath(request.folder)
+    app_folder = os.path.join(APPS_FOLDER, w23p_app) if w23p_app else os.path.normpath(request.folder)
     ret = fs2json.dir_to_fs(app_folder, dir_list)
     return ret
 
 @action('write_file', method = 'POST')
 def write_file():
     fdata = request.json.get('fdata')
-    w3p_app = fdata.get('w3p_app')
-    app_folder = os.path.join(APPS_FOLDER, w3p_app) if w3p_app else os.path.normpath(request.folder)
+    w23p_app = fdata.get('w23p_app')
+    app_folder = os.path.join(APPS_FOLDER, w23p_app) if w23p_app else os.path.normpath(request.folder)
     ret = fs2json.write_file(fdata, app_folder)
     return dict(ret)
 
@@ -53,8 +53,8 @@ def write_file():
 def del_file():
     app_folder = os.path.dirname(__file__)
     fdata = request.json.get('fdata')
-    w3p_app = fdata.get('w3p_app')
-    app_folder = os.path.join(APPS_FOLDER, w3p_app) if w3p_app else os.path.normpath(app_folder)
+    w23p_app = fdata.get('w23p_app')
+    app_folder = os.path.join(APPS_FOLDER, w23p_app) if w23p_app else os.path.normpath(app_folder)
     ret = fs2json.del_file(fdata, app_folder)
     return dict(ret)
 
