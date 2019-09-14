@@ -1,0 +1,62 @@
+
+v-def templ_form:
+    div(class='container'):
+        form(enctype="multipart/form-data", ref='form', :name='form_name'):
+            div(class='lifted rounded'):
+                div(class='title center black '):
+                    '{{title}}'
+                div(class='padded'):
+                    div(v-for = 'field in fields',  class='container'):
+                        template(v-if = 'field.slot'):
+                            slot(:field='field'):
+                        template(v-else):
+                            label(class='right', :class = 'label_w', v-html='field.label'):
+                            div(:class='input_w'):
+                                component(:is = 'map_component(field.type)', v-bind='field.cmp_args'):
+                    div(class='container'):
+                        label(:class = 'label_w'):
+                            ''
+                        div(:class='input_w', style='padding:0.3em'):
+                            button(v-for ='action in actions', class='btn', type='button', @click='fire(action)'):
+                                '{{action}}'
+
+v-pyj:
++++
+from asset.rs_vue import V_collector,  RS_vue
+
+vc= V_collector()
+class vForm(RS_vue):
+    def __init__(self):
+        super(vc)
+        self.template = templ_form
+        self.props = {
+            title: {type: String, default: 'Form'},
+            record: Object,
+            fields: Array,
+            label_w: {type: String, default: 'quarter'},
+            input_w: {type: String, default: 'threequarters'},
+            actions: Array,
+            form_name: String
+        }
+    def _init_data(self):
+        ret = {
+        }
+        return ret
+
+    @vc.meth
+    def fire(self, action):
+        formData = new FormData(self.$refs.form)
+        self.$emit('action', action , formData)
+
+    @vc.meth
+    def map_component(self, ftype):
+        return 'input'
+
+def make():
+    return vForm()
+
+
+if __name__== '__main__':
+    pass
+
+---

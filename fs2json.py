@@ -101,7 +101,11 @@ def write_file(fdata, app_folder):
     ret = validate_fdata(fdata, app_folder)
     if ret.error:
         return ret
-    content =  fdata.get('content', '').encode('utf8')
+    content =  fdata.get('content', '')
+    if content and hasattr(content, 'read'):
+        content = content.read()
+    else:
+        content = content.encode('utf8')
     with open(ret.os_path, 'wb') as fl:
         fl.write(content or b'')
     ret.md5_hash = md5_hash(content)

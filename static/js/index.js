@@ -195,7 +195,146 @@ var ՐՏ_modules = {};
 
 (function(){
     var __name__ = "asset.common";
+    class Merge_call {
+        set_key (a) {
+            var self = this;
+            self.cmd = "set_key";
+            self.args = a;
+            return self;
+        }
+        merge (a) {
+            var self = this;
+            self.cmd = "merge";
+            self.args = a;
+            return self;
+        }
+    }
     function asyncer(fun) {
+        var merge_call, ret;
+        merge_call = {};
+        function wrap(ctx) {
+            function pret(ok, err) {
+                function inner(f, opt) {
+                    var ret_v, ret_throw, merge_key, v, p;
+                    if (opt) {
+                        ret_v = opt.ret_v;
+                        ret_throw = opt.ret_throw;
+                        merge_key = opt.merge_key;
+                    }
+                    function _err(e, merge_key) {
+                        err(e);
+                        if (merge_key) {
+                            merge_call[merge_key].map(function(cb) {
+                                cb.err(e);
+                            });
+                            delete merge_call[merge_key];
+                        }
+                    }
+                    if (ret_throw) {
+                        v = ret_throw;
+                    } else {
+                        try {
+                            f = f || fun.apply(ctx.self, ctx.args);
+                            v = f.next(ret_v);
+                        } catch (ՐՏ_Exception) {
+                            var e = ՐՏ_Exception;
+                            _err(e, merge_key);
+                            return;
+                        }
+                    }
+                    if (v.value instanceof Merge_call) {
+                        if (v.value.cmd === "get_keys") {
+                            Promise.resolve(Object.keys(merge_call)).then(function(ret_v) {
+                                inner(f, {
+                                    ret_v: ret_v,
+                                    merge_key: merge_key
+                                });
+                            });
+                        } else if (v.value.cmd === "merge") {
+                            if (p = merge_call[v.value.args]) {
+                                p.push({
+                                    ok: function(v) {
+                                        ok(v);
+                                    },
+                                    err: function(v) {
+                                        err(v);
+                                    }
+                                });
+                                return;
+                            } else {
+                                merge_key = v.value.args;
+                                merge_call[merge_key] = [];
+                                Promise.resolve(null).then(function(ret_v) {
+                                    inner(f, {
+                                        ret_v: ret_v,
+                                        merge_key: merge_key
+                                    });
+                                });
+                            }
+                        } else {
+                            Promise.resolve(null).then(function(ret_v) {
+                                inner(f, {
+                                    ret_v: ret_v,
+                                    merge_key: merge_key
+                                });
+                            });
+                        }
+                    } else if (!v.done) {
+                        if (v.value instanceof Promise) {
+                            v.value.then(function(ret_v) {
+                                inner(f, {
+                                    ret_v: ret_v,
+                                    merge_key: merge_key
+                                });
+                            }, function(e) {
+                                var v;
+                                try {
+                                    v = f.throw(e);
+                                } catch (ՐՏ_Exception) {
+                                    var e = ՐՏ_Exception;
+                                    _err(e, merge_key);
+                                    return;
+                                }
+                                inner(f, {
+                                    ret_throw: v,
+                                    merge_key: merge_key
+                                });
+                            });
+                        } else {
+                            Promise.resolve(v.value).then(function(ret_v) {
+                                inner(f, {
+                                    ret_v: ret_v,
+                                    merge_key: merge_key
+                                });
+                            });
+                        }
+                    } else {
+                        ok(v.value);
+                        if (merge_key) {
+                            merge_call[merge_key].map(function(cb) {
+                                cb.ok(v.value);
+                            });
+                            delete merge_call[merge_key];
+                        }
+                    }
+                }
+                inner();
+            }
+            return pret;
+        }
+        ret = function() {
+            var ctx, p;
+            ctx = {
+                self: this,
+                args: arguments
+            };
+            p = new Promise(wrap(ctx));
+            return p;
+        };
+        ret.__name__ = fun.__name__ || fun.name;
+        return ret;
+    }
+    function __asyncer(fun) {
         var ctx, ret;
         ctx = {
             self: void 0,
@@ -400,7 +539,11 @@ var ՐՏ_modules = {};
         };
         return ret;
     }
+    ՐՏ_modules["asset.common"]["Merge_call"] = Merge_call;
+
     ՐՏ_modules["asset.common"]["asyncer"] = asyncer;
+
+    ՐՏ_modules["asset.common"]["__asyncer"] = __asyncer;
 
     ՐՏ_modules["asset.common"]["upload_text"] = upload_text;
 

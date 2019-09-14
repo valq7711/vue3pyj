@@ -1,0 +1,63 @@
+v-def templ_login:
+    div(class='login'):
+        vform(form_name ='login',
+              :fields = 'fields',
+              :actions = 'actions',
+              @action = 'login_click',
+              title = 'Login',
+              label_w = 'quarter',
+              style = 'width:300px',
+              ):
+
+v-pyj:
++++
+import .vform
+from asset.rs_vue import V_collector,  RS_vue
+from asset.common import asyncer
+
+vc = V_collector()
+class Login(RS_vue):
+    def __init__(self):
+        super(vc)
+        self.template = templ_login
+        self.components = { vform: vform.make() }
+        self.map_store = {
+            'login' : 'login*',
+            'is_logged':'is_logged'
+        }
+
+    def _init_data(self):
+        ret = {
+            fields: [
+                {label: '<i class="fa fa-key"></i>' ,
+                     type: 'password',
+                     cmp_args: {
+                        name: 'password',
+                        type: "password",
+                        placeholder: 'pwd'
+                    }
+                },
+            ],
+            actions: ["OK"],
+            wait: False
+        }
+        return ret
+
+    def mounted(self):
+        self.$el.style.visibility='visible'
+        self.$el.style.opacity= 1
+
+    @vc.meth
+    @asyncer
+    def login_click(self, action, data):
+        self.wait = True
+        yield self.login(data)
+        self.wait = False
+        if self.is_logged:
+            self.$emit('close', True)
+def make():
+    return Login()
+
+if __name__== '__main__':
+    pass
+---
