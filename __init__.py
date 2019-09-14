@@ -1,7 +1,15 @@
 import os
+<<<<<<< HEAD
 from py4web import action, abort, request, DAL, Field, Cache
 from py4web.core import Session, Fixture, Reloader
 from pydal.validators import CRYPT
+=======
+try:
+    from py4web import action, request, DAL, Field, Session, Cache, user_in
+except ImportError:
+    from web3py import action, request, DAL, Field, Session, Cache, user_in
+
+>>>>>>> 2af088c5d784c8861869455234b4084368e344bc
 from . import fs2json
 
 # define session and cache objects
