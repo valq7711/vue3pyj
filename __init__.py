@@ -1,23 +1,12 @@
 import os
-<<<<<<< HEAD
 from py4web import action, abort, request, DAL, Field, Cache
 from py4web.core import Session, Fixture, Reloader
 from pydal.validators import CRYPT
-=======
-try:
-    from py4web import action, request, DAL, Field, Session, Cache, user_in
-except ImportError:
-    from web3py import action, request, DAL, Field, Session, Cache, user_in
-
->>>>>>> 2af088c5d784c8861869455234b4084368e344bc
 from . import fs2json
 
 # define session and cache objects
 session = Session(secret='some secret')
 cache = Cache(size=1000)
-
-
-
 session = Session()
 
 class Logged(Fixture):
@@ -53,18 +42,11 @@ def logout():
     session['user'] = None
     return dict()
 
-
-
-# define database and tables
-#db = DAL('sqlite://storage.db', folder=os.path.join(os.path.dirname(__file__), 'databases'))
-#db.define_table('todo', Field('info'))
-
 @action('index')         # the function below is exposed as a GET action
-@action.uses('index.html')          # we use the template index.html to render it
+@action.uses('index.html')    # we use the template index.html to render it
 def index():
     return dict(web23py='web3py', title = 'Vue3pyj')
 
-#APPS_FOLDER = os.path.normpath(os.path.dirname(os.path.dirname( __file__)))
 APPS_FOLDER = os.environ['PY4WEB_APPS_FOLDER']
 
 @action('app_list')
@@ -102,15 +84,6 @@ def write_file():
     ret = fs2json.write_file(fdata, app_folder)
     return dict(ret)
 
-#@action('echo', method = 'POST')
-def echo():
-    #with open(request.files['q']).file as f:
-    #    ret = f.read()
-
-    fdata = { k:request.forms.get(k) for k in request.forms}
-    fdata['q_key'] = fdata.get('q')
-    return fdata
-
 @action('del_file', method = 'POST')
 @session_secured
 def del_file():
@@ -125,7 +98,6 @@ def del_file():
 @session_secured
 def try_connect():
     return dict(flash='Hi!')
-
 
 @action('reload')
 @session_secured
