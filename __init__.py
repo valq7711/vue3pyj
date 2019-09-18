@@ -4,9 +4,6 @@ from py4web.core import Session, Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
 
-# define session and cache objects
-session = Session(secret='some secret')
-cache = Cache(size=1000)
 session = Session()
 
 class Logged(Fixture):
