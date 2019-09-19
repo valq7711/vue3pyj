@@ -1,6 +1,6 @@
 import os
-from py4web import action, abort, request
-from py4web.core import Session, Fixture, Reloader
+from py4web import action, abort, request, Session
+from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
 
