@@ -10,7 +10,6 @@ class Merge_call:
         self.args = a
         return self
 
-#common.pyj
 def asyncer(fun):
     merge_call = {}
     def wrap(ctx):
@@ -78,41 +77,6 @@ def asyncer(fun):
     return ret
 
 
-def __asyncer(fun):
-    ctx = {self:undefined, args: undefined}
-    def pret(ok, err):
-        def inner(f, ret_v, ret_throw):
-            if ret_throw:
-                v = ret_throw
-            else:
-                try:
-                    f = f or fun.apply(ctx.self, ctx.args)
-                    v = f.next(ret_v)
-                except as e:
-                    err(e)
-                    return
-            if not v.done:
-                if isinstance(v.value, Promise):
-                    v.value.then(def(ret_v): inner(f, ret_v);,
-                                 def(e):
-                                     try:
-                                         v = f.throw(e)
-                                     except as e:
-                                         err(e)
-                                         return
-                                     inner(f, None, v);
-                    )
-                else:
-                    Promise.resolve(v.value).then(def(ret_v): inner(f, ret_v);)
-            else:
-                ok(v.value)
-        inner()
-    ret =  def():
-        ctx.self = this
-        ctx.args = arguments
-        return Promise(pret);
-    ret.__name__ = fun.__name__ or fun.name
-    return ret
 
 def upload_text():
     def prom(ok, err):

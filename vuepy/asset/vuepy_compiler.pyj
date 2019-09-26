@@ -29,7 +29,7 @@ def vuepy_precompile(s, fp_no_ext):
     if prec.v_pyj:
         PYJ_CACHE[fp_no_ext +'.pyj'] = prec.v_pyj
     if prec.v_css:
-        prec.v_css.store_in = prec.v_css.store_in or (fp_no_ext + '.css')
+        prec.v_css.store_in = prec.v_css.store_in or (fp_no_ext.split('/')[-1] + '.css')
         # remove `root/vuepy/` prefix from filename for stored_by
         prec.v_css.stored_by = fp_no_ext.split('/')[2:].join('/') + '.vuepy'
         if not CSS_CACHE[prec.v_css.store_in]:
@@ -38,41 +38,6 @@ def vuepy_precompile(s, fp_no_ext):
     LAST_VUEPY_PREC.prec = prec
     LAST_VUEPY_PREC.fp_no_ext = fp_no_ext
     return prec
-
-def expand_import_dot2package(pyj_s, fp, fs):
-    def get_top_package(fp, fs):
-        pth = fp.split('/')[1:-1]
-        cp = 'root'
-        i = 0
-        for d in pth:
-            cp += ('/'+ d)
-            if fs.id_by_path(cp + '/__init__.pyj'):
-                break
-            i += 1
-        ret = pth[i:].join('.')
-        return ret
-    package_pref = get_top_package(fp, fs)
-    package_pref= package_pref ? package_pref + '.' : ''
-    def dot_expander(s, import_line, mod_as_names, from_import, dot_package):
-        if import_line:
-            mod_as_names = mod_as_names.split(/ *, */).map(def(mod_as_name):
-                if /^ *\./.test(mod_as_name):
-                    mod_name = mod_as_name.split(/ +as +/)
-                    mod = mod_name[0]
-                    name = mod_name[1] and mod_name[1].trim() or mod.replace(/^ *\./, '')
-                    # .mod -> package_pref.mod as name
-                    mod_as_name =  mod.replace(/^ *\./, package_pref) + ' as ' + name
-                return mod_as_name
-            )
-            ret = 'import ' +  mod_as_names.join(', ') # + '\n'
-            print(fp, s, ' -> ', ret)
-            return ret
-        elif from_import:
-            dot_package = dot_package.replace(/^ *\./, package_pref)
-            ret = 'from ' +  dot_package + ' import '
-            print(fp, s, ' -> ', ret)
-            return ret
-    return pyj_s.replace(/(^import +(.*)$)|(^from +(\.[\w.]+) +import +)/mg, dot_expander)
 
 def make_file_reader(fs):
     class Read_ex(Error):
@@ -97,7 +62,7 @@ def make_file_reader(fs):
             if not fid:
                 raise Read_ex()
             ret =  fs.files[fid].content
-        return expand_import_dot2package(ret, fp, fs)
+        return ret
     return read_file
 
 
@@ -192,7 +157,7 @@ def _rs_compile(s, fp, fs, opt):
     }
     opt = Object.assign({}, defs, opt )
     try:
-        s = s ? expand_import_dot2package(s, fp, fs) : opt.readfile(fp)
+        s = s or opt.readfile(fp)
         amd_wrapper, pyj_s = make_amd_wrapper(s)
         ret = compiler.compile(pyj_s, opt)
         ret = amd_wrapper(ret)

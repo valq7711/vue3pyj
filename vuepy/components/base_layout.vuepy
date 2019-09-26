@@ -3,6 +3,7 @@ v-def templ:
     div:
         div(v-if ='is_busy', class='busy',  style='position: fixed; top:0; left:0; right:0; bottom: 0; z-index:9999'):
         header(class= "black padded lifted fill", style= 'position:fixed; z-index:1000; top:0'):
+            modal:
             div(class= "container", id='top_menu'):
                 top_menu(class= "fill middle",
                          :menus= 'menus',
@@ -17,7 +18,7 @@ v-def templ:
                             div(style='position:relative;'):
                                 a(class='black'):
                                     i(class='fa fa-bullhorn fa-flip-horizontal'):
-                                flash( ref='flash', class='flash'):
+                                flash( ref='flash', class='flash', style = 'z-index:10000;'):
                             ul():
                                 li:
                                     a(class='hidden'):

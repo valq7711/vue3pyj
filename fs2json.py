@@ -60,8 +60,8 @@ def get_dir(pth_to_dir,  parent_id, files, dirs, dir_list = None,  file_mask = F
                 ret['content'].append(fl['id'])
             else:
                 continue
-        elif not dir_list or it in dir_list.keys():
-            d = get_dir(fp,  ret['id'], files, dirs, dir_list and dir_list[it], file_mask)
+        elif dir_list == '*' or it in dir_list.keys():
+            d = get_dir(fp,  ret['id'], files, dirs, dir_list =='*' and '*' or dir_list[it], file_mask)
             dirs[d['id']] = d
             ret['content'].append(d['id'])
     return ret

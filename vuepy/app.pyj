@@ -1,14 +1,16 @@
-v-def app_templ:
-    div:
-        layout:
-            div(style = 'width:100%; padding: 0 10px;'):
-                #modal:
-                div(v-show = 'show_explorer', class = 'explorer'):
-                    folder_content(@blur = 'toggle_explorer(false)'):
-                editor:
+app_templ= """
+<div>
+    <layout>
+        <div  style = 'width:100%; padding: 0 10px;'>
+            <div  v-show = 'show_explorer' class = 'explorer'>
+                <folder_content  @blur = 'toggle_explorer(false)'></folder_content>
+            </div>
+            <editor></editor>
+        </div>
+    </layout>
+</div>
+"""
 
-v-pyj:
-+++
 import_amd vue as Vue, codemirror/lib/codemirror as CodeMirror, rapydscript_web as rapydscript
 import_amd axios.min as axios
 
@@ -76,4 +78,3 @@ def main():
     pass
 if __name__=='__main__':
     main()
----

@@ -139,19 +139,12 @@ v-def templ_folder_content:
                                 i(class='clickable',
                                       :class = 'ract.icon.class',
                                       :style='ract.icon.style',
-                                      @click.stop = 'action(ract, row.id)'):
+                                      @click.stop = 'action(ract.name, row.id)'):
 
 v-pyj:
 +++
 from asset.rs_vue import RS_vue, V_collector
-
-"""
-@external
-class Vue:
-    @staticmethod
-    def component():
-        pass
-"""
+from asset.common import blur_click_listener
 
 def it_by_path(obj, path):
     if not isinstance(path, Array):
@@ -243,11 +236,16 @@ class Folder_content(RS_vue):
             ret.push(rec)
         return ret
 
+    def mounted(self):
+        self.listener = blur_click_listener(self.$el, def(): self.$emit('blur');)
+        self.listener.start()
+
+    def beforeDestroy(self):
+        self.listener.stop()
+
+
 def make():
     return Folder_content()
-
-def main():
-    pass
 
 if __name__=='__main__':
     main()

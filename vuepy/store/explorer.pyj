@@ -91,11 +91,6 @@ class State(RS_state_api):
                      name:'row_download',
                      icon: { class: 'fa fa-download', style: 'color: gray'}
                 })
-                if r.name.endsWith('.html'):
-                    ret.push({
-                         name:'try_html',
-                         icon: { class: 'fa fa-play', style: 'color: red; margin-left:5px;'}
-                    })
             return ret
         return inner
 

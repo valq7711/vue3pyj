@@ -1,13 +1,13 @@
-import os
-from py4web import action, abort, request
-from py4web.core import Session, Fixture, Reloader
+import os, re
+from py4web import action, abort, request, Session
+from py4web.core import  Reloader, Fixture
 from pydal.validators import CRYPT
 from . import fs2json
+import uuid
 
 session = Session()
 
 class Logged(Fixture):
-
     def __init__(self, session):
         self.__prerequisites__ = [session]
         self.session = session
@@ -31,7 +31,7 @@ def login():
             valid = CRYPT()(password)[0] == encrypted_password
     if valid:
         session['user'] = dict(id=1)
-    return dict(user=valid)
+    return dict(user=valid, app='v3p')
 
 @action('logout', method='POST')
 @action.uses(session)
@@ -39,8 +39,8 @@ def logout():
     session['user'] = None
     return dict()
 
-@action('index')         # the function below is exposed as a GET action
-@action.uses('index.html')    # we use the template index.html to render it
+@action('index')
+@action.uses('index.html')
 def index():
     return dict(web23py='web3py', title = 'Vue3pyj')
 
@@ -49,26 +49,31 @@ APPS_FOLDER = os.environ['PY4WEB_APPS_FOLDER']
 @action('app_list')
 @session_secured
 def app_list():
-    return dict(app_list = next(os.walk(APPS_FOLDER))[1])
-
+    return dict(app_list = [app for app in next(os.walk(APPS_FOLDER))[1] if not app.startswith('__')])
 
 @action('get_fs/<w23p_app>')
 @session_secured
 def get_fs(w23p_app = None):
+    app_rex  = re.compile('^[a-z_][a-z_0-9]*$', flags = re.I)
+    if not (w23p_app and app_rex.match(w23p_app)):
+        return dict()
+
+    file_mask = re.compile('(.(?!\.min))+.\.(js|py|css|html|vuepy|pyj)$', flags= re.I)
     dir_list = {
-        'controllers':None,
+        'controllers':'*',
         'static': {
-            'js': None,
-            'css': None,
+            'js': '*',
+            'css': '*',
+            'components': '*',
         },
-        'modules':None,
-        'models':None,
-        'views':None,
-        'templates':None,
-        'vuepy':None,
+        'modules':'*',
+        'models':'*',
+        'views':'*',
+        'templates':'*',
+        'vuepy':'*'
     }
-    app_folder = os.path.join(APPS_FOLDER, w23p_app) if w23p_app else os.path.normpath(request.folder)
-    ret = fs2json.dir_to_fs(app_folder, dir_list)
+    app_folder = os.path.join(APPS_FOLDER, w23p_app)
+    ret = fs2json.dir_to_fs(app_folder, dir_list, file_mask)
     return ret
 
 @action('write_file', method = 'POST')

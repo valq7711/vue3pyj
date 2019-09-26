@@ -23,7 +23,8 @@ class Login(RS_vue):
         self.components = { vform: vform.make() }
         self.map_store = {
             'login' : 'login*',
-            'is_logged':'is_logged'
+            'is_logged':'is_logged',
+            'flash': 'flash*'
         }
 
     def _init_data(self):
@@ -39,7 +40,6 @@ class Login(RS_vue):
                 },
             ],
             actions: ["OK"],
-            wait: False
         }
         return ret
 
@@ -50,11 +50,12 @@ class Login(RS_vue):
     @vc.meth
     @asyncer
     def login_click(self, action, data):
-        self.wait = True
         yield self.login(data)
-        self.wait = False
         if self.is_logged:
             self.$emit('close', True)
+            self.flash('Hi!', 'ok')
+        else:
+            self.flash('invalid password', 'error')
 def make():
     return Login()
 

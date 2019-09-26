@@ -1,6 +1,6 @@
 
 v-def templ_flash:
-    div(id='flash', :class='cls'):
+    div(id='flash', :class='cls' ):
         template(v-if = 'component'):
             component(:is = 'component', v-bind = 'cargs'):
         template(v-else):

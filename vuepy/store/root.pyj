@@ -197,7 +197,8 @@ class Store(RS_store):
     @asyncer
     def login(self, data):
         pwd = data.get('password')
-        self.state_api.state.is_logged = (yield self.api.server.post('login', {password: pwd})).data.user
+        self.state_api.state.is_logged = \
+            (yield self.api.server.post('login', {password: pwd})).data.user
 
     @vc.action
     @asyncer
@@ -214,7 +215,7 @@ class Store(RS_store):
     def w23p_app_list(self):
         self.state_api.state.w23p_app_list = (yield self.api.server.get('app_list')).data.app_list
 
-    # shortcut for flash
+    @vc.action
     def flash(self, *args):
         self.commit('flash', *args)
         self.$emit('flash', *args)

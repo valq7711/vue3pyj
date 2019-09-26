@@ -172,7 +172,6 @@ class Store(RS_store):
         self.commit('set_doc_change_gen', doc_num, cm_doc.changeGeneration())
         self.commit('toggle_doc_saved', doc_num, True)
 
-    #@vc.action
     def init_cm(self):
         CM = self.api.CM
 
@@ -190,6 +189,7 @@ class Store(RS_store):
         defkeys["Shift-Ctrl-C"] = def(cm):  self.$emit('new');
         defkeys["Ctrl-F9"] = def(cm):  self.$emit('compile');
         defkeys["Alt-V"] = def(cm):  self.dispatch('toggle_vim');
+        CM.commands.save = def(cm): self.$emit('save', cm);
 
         cm_rapydscript.reg_mode(CM)
         cm_vuepy.reg_mode(CM)
