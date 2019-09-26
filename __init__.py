@@ -1,9 +1,8 @@
-import os, re
+import os
 from py4web import action, abort, request, Session
-from py4web.core import  Reloader, Fixture
+from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
-import uuid
 
 session = Session()
 
@@ -107,3 +106,4 @@ def reload():
     """reloads installed apps"""
     Reloader.import_apps()
     return dict(flash = 'Done!')
+
