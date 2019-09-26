@@ -3014,7 +3014,7 @@ var ՐՏ_modules = {};
                 }
                 return "";
             }
-            out_pyj_s = pyj_s.replace(/^import_amd +(.*)\n/gm, replacer);
+            out_pyj_s = pyj_s.replace(/^import_amd +(.*?)(#.*)?\n/gm, replacer);
             return [ out, out_pyj_s ];
         }
         [mod_as_names, out_pyj_s] = get_amd_imports(pyj_s);

@@ -116,7 +116,7 @@ def make_amd_wrapper(pyj_s):
                 out.push({mod: mod.trim(), name: name.trim()})
             #print(arguments)
             return ''
-        out_pyj_s = pyj_s.replace(/^import_amd +(.*)\n/mg,replacer)
+        out_pyj_s = pyj_s.replace(/^import_amd +(.*?)(#.*)?\n/mg,replacer)
         return [out, out_pyj_s]
 
     mod_as_names, out_pyj_s = get_amd_imports(pyj_s)
