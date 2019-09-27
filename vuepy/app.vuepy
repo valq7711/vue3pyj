@@ -15,14 +15,14 @@ import_amd axios.min as axios
 from asset.rs_vue import RS_vue, V_collector
 import asset.common as common
 from components import \
-    confirm, error as cerror, app_selector, login,\
+    confirm, error, app_selector, login,\
     folder_content, editor, base_layout as layout, modal
 
 from store.root import Store
 
 Vue.use(Store)
 def reg_components():
-    comps = JS('{confirm, cerror, app_selector, login, modal}')
+    comps = JS('{confirm, error, app_selector, login, modal}')
     Object.keys(comps).forEach(def(k): comps[k] = comps[k].make();)
     Vue.options.components = comps
 

@@ -6870,7 +6870,7 @@ var ՐՏ_modules = {};
     var common = ՐՏ_modules["asset.common"];
     
     var confirm = ՐՏ_modules["components"].confirm;
-    var cerror = ՐՏ_modules["components"].error;
+    var error = ՐՏ_modules["components"].error;
     var app_selector = ՐՏ_modules["components"].app_selector;
     var login = ՐՏ_modules["components"].login;
     var folder_content = ՐՏ_modules["components"].folder_content;
@@ -6883,7 +6883,7 @@ var ՐՏ_modules = {};
     Vue.use(Store);
     function reg_components() {
         var comps;
-        comps = {confirm, cerror, app_selector, login, modal};
+        comps = {confirm, error, app_selector, login, modal};
         Object.keys(comps).forEach(function(k) {
             comps[k] = comps[k].make();
         });
