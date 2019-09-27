@@ -1,0 +1,36 @@
+v-def templ:
+    ul:
+        li(v-for="product in products", :key="product.id"):
+            '{{ product.title }} - {{ product.price  }}'
+            br: button(
+                    :disabled="!product.inventory",
+                    @click="add_product_to_cart(product)",
+                ):'Add to cart'
+
+
+v-pyj:
++++
+from asset.rs_vue import V_collector, RS_vue
+
+vc = V_collector()
+class Prod_list(RS_vue):
+    def __init__(self):
+        super(vc)
+        self.template = templ
+        self.map_store = {
+            products: '/products.all',
+            get_all_products: '/products.get_all_products*',
+            add_product_to_cart: '/cart.add_product_to_cart*',
+        }
+
+    def _init_data(self):
+        ret = {
+        }
+        return ret
+
+    def created(self):
+        self.get_all_products()
+
+def  make():
+    return Prod_list()
+---

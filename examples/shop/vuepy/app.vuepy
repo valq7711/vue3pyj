@@ -1,0 +1,61 @@
+v-css(store_in = 'shop.css'):
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      color: #2c3e50;
+    }
+
+    ul {
+      line-height: 1.5em;
+      padding-left: 1.5em;
+    }
+
+    a {
+      color: #7f8c8d;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: #4fc08d;
+    }
+
+v-def app_templ:
+    div(id="app"):
+        h1:'Shopping Cart Example'
+        hr:
+        h2:'Products'
+        prod_list:
+        shopping_cart:
+
+v-pyj:
++++
+import_amd vue as Vue # turns app in AMD-module
+
+from asset.rs_vue import RS_vue, V_collector
+from store.root import Store
+from components import shopping_cart, prod_list
+
+
+Vue.use(Store)
+window.store = Store(rs_req)
+
+vc = V_collector()
+class App(RS_vue):
+    def __init__(self):
+        super(vc)
+        self.store = store
+        self.template = app_templ
+        self.components={
+            shopping_cart: shopping_cart.make(),
+            prod_list: prod_list.make()
+        }
+
+    def _init_data(self):
+        return {}
+
+# this is an AMD module, so we should do explicit export
+exports.start = def(el):
+    app  =  App()
+    window.app = (new Vue(app))
+    window.app.$mount(el or '#app')
+
+---

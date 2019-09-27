@@ -1,0 +1,26 @@
+PRODUCTS = [
+  {"id": 1, "title": "iPad 4 Mini", "price": 500.01, "inventory": 2},
+  {"id": 2, "title": "H&M T-Shirt White", "price": 10.99, "inventory": 10},
+  {"id": 3, "title": "Charli XCX - Sucker CD", "price": 19.99, "inventory": 5}
+]
+
+class Shop_err(Error):
+    def __init__(self, code, msg):
+        self.code = code
+        self.message = msg
+
+def get_products():
+    def call(ok, err):
+        setTimeout(def(): ok(PRODUCTS);, 100)
+    return Promise(call)
+
+
+def buy_products(products):
+    def call(ok, err):
+        setTimeout(def():
+            # simulate random checkout failure.
+            (Math.random() > 0.5 or navigator.userAgent.indexOf('PhantomJS') > -1) \
+                ? ok() \
+                : err(Shop_err(0, 'Out of service'));
+        , 100)
+    return Promise(call)

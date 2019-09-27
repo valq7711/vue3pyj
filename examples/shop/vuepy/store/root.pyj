@@ -1,0 +1,28 @@
+from asset.rs_vue import V_collector
+from asset.store2 import  RS_store, RS_state_api
+import .cart, .products
+
+def default_state():
+    ret = {
+        cart: None,
+        products: None
+    }
+    return ret
+
+vc = V_collector()
+class State(RS_state_api):
+    pass
+
+class Store(RS_store):
+    def __init__(self):
+        self.state_api = State(vc, default_state(), self.vue)
+        self.actions = vc._actions
+
+        #mount modules
+        self.mount_module(cart.Store(self), 'cart')
+        self.mount_module(products.Store(self), 'products')
+
+
+
+if __name__ == '__main__':
+    pass

@@ -1,0 +1,41 @@
+from asset.common import asyncer
+from asset.rs_vue import V_collector
+from asset.store2 import  RS_store, RS_state_api
+import api.shop as shop
+
+def default_state():
+    ret = {
+        all: []
+    }
+    return ret
+
+vc = V_collector()
+class State(RS_state_api):
+
+    @vc.mutation
+    def set_products(self, products):
+        self.state.all = products
+
+    @vc.mutation
+    def dec_product_inventory(self, product):
+        product = self.state.all.find(def(it): return it.id is product.id;)
+        product.inventory -= 1
+
+class Store(RS_store):
+    def __init__(self, root):
+        self.root = root
+        self.state_api = State(vc, default_state(), self.root.state_api)
+        self.actions = vc._actions
+
+    @vc.action
+    @asyncer
+    def get_all_products(self):
+        try:
+            products = yield shop.get_products()
+        except:
+            console.log('failed get_all_products')
+            return
+        self.commit('set_products', products)
+
+if __name__ == '__main__':
+    pass
