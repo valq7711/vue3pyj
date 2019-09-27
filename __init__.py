@@ -1,4 +1,4 @@
-import os
+import os, re
 from py4web import action, abort, request, Session
 from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
