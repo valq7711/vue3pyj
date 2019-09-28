@@ -6869,14 +6869,14 @@ var ՐՏ_modules = {};
     
     var common = ՐՏ_modules["asset.common"];
     
-    var confirm = ՐՏ_modules["components"].confirm;
-    var error = ՐՏ_modules["components"].error;
-    var app_selector = ՐՏ_modules["components"].app_selector;
-    var login = ՐՏ_modules["components"].login;
-    var folder_content = ՐՏ_modules["components"].folder_content;
-    var editor = ՐՏ_modules["components"].editor;
-    var layout = ՐՏ_modules["components"].base_layout;
-    var modal = ՐՏ_modules["components"].modal;
+    var confirm = ՐՏ_modules["components.confirm"];
+    var error = ՐՏ_modules["components.error"];
+    var app_selector = ՐՏ_modules["components.app_selector"];
+    var login = ՐՏ_modules["components.login"];
+    var folder_content = ՐՏ_modules["components.folder_content"];
+    var editor = ՐՏ_modules["components.editor"];
+    var layout = ՐՏ_modules["components.base_layout"];
+    var modal = ՐՏ_modules["components.modal"];
     
     var Store = ՐՏ_modules["store.root"].Store;
     

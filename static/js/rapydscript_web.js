@@ -5227,7 +5227,7 @@ var ՐՏ_modules = {};
         }
         function import_(from_import) {
             var ՐՏitr45, ՐՏidx45, ՐՏitr46, ՐՏidx46;
-            var ans, package_pref, name, tmp, key, alias, imp, cur_imported, classes, is_init_pyj, argnames, aname, argvar, obj, i;
+            var ans, package_pref, name, tmp, key, alias, imp, from_pack_imp, cur_imported, classes, is_init_pyj, argnames, aname, argvar, obj, i;
             ans = new ast.Imports({
                 "imports": []
             });
@@ -5290,6 +5290,7 @@ var ՐՏ_modules = {};
                     break;
                 }
             }
+            from_pack_imp = [];
             ՐՏitr45 = ՐՏ_Iterable(ans["imports"]);
             for (ՐՏidx45 = 0; ՐՏidx45 < ՐՏitr45.length; ՐՏidx45++) {
                 imp = ՐՏitr45[ՐՏidx45];
@@ -5298,21 +5299,38 @@ var ՐՏ_modules = {};
                 cur_imported = IMPORTED[imp.key];
                 classes = cur_imported.classes;
                 is_init_pyj = /^.+?__init__\.pyj$/.test(cur_imported.filename);
+                argnames = [];
                 if (from_import) {
                     expect_token("keyword", "import");
                     imp.argnames = argnames = [];
                     while (true) {
-                        aname = as_symbol(ast.ImportedVar);
+                        if (!is_("name")) {
+                            unexpected();
+                        }
+                        name = S.token.value;
+                        if (is_init_pyj && !cur_imported.exports.find(function(it) {
+                            return it.name === name;
+                        })) {
+                            key = imp.key + "." + name;
+                            aname = new ast.Import({
+                                "module": expression(false),
+                                "key": key,
+                                "alias": new_symbol(ast.SymbolAlias, name),
+                                "argnames": null,
+                                "body": function() {
+                                    return IMPORTED[key];
+                                }
+                            });
+                            from_pack_imp.push(aname);
+                            do_import(key);
+                        } else {
+                            aname = as_symbol(ast.ImportedVar);
+                            argnames.push(aname);
+                        }
                         if (is_("keyword", "as")) {
                             next();
                             aname.alias = as_symbol(ast.SymbolAlias);
                         }
-                        if (is_init_pyj && !cur_imported.exports.find(function(it) {
-                            return it.name === aname.name;
-                        })) {
-                            do_import(imp.key + "." + aname.name);
-                        }
-                        argnames.push(aname);
                         if (is_("punc", ",")) {
                             next();
                         } else {
@@ -5344,6 +5362,7 @@ var ՐՏ_modules = {};
                     }
                 }
             }
+            [].push.apply(ans.imports, from_pack_imp);
             return ans;
         }
         function class_() {
@@ -8348,7 +8367,9 @@ var ՐՏ_modules = {};
             ՐՏitr77 = ՐՏ_Iterable(container.imports);
             for (ՐՏidx77 = 0; ՐՏidx77 < ՐՏitr77.length; ՐՏidx77++) {
                 self = ՐՏitr77[ՐՏidx77];
-                output.import(self.module.name);
+                if (self instanceof ast.Splat) {
+                    output.import(self.module.name);
+                }
                 if (self.argnames) {
                     ՐՏitr78 = ՐՏ_Iterable(self.argnames);
                     for (ՐՏidx78 = 0; ՐՏidx78 < ՐՏitr78.length; ՐՏidx78++) {
