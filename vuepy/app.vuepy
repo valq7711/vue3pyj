@@ -14,18 +14,17 @@ import_amd axios.min as axios
 
 from asset.rs_vue import RS_vue, V_collector
 import asset.common as common
-from components import \
+
+import components with \
     confirm, error, app_selector, login,\
-    folder_content, editor, base_layout as layout, modal
+    folder_content, editor, base_layout, modal
 
 from store.root import Store
 
 Vue.use(Store)
 def reg_components():
-    comps = JS('{confirm, error, app_selector, login, modal}')
-    Object.keys(comps).forEach(def(k): comps[k] = comps[k].make();)
-    Vue.options.components = comps
-
+    comps = 'confirm error app_selector login modal'.split(/ +/)
+    Vue.options.components = { c:components[c].make() for c in comps }
 reg_components()
 
 web23py = document.getElementsByTagName('meta')[0].dataset.web23py
@@ -44,9 +43,9 @@ class App(RS_vue):
             is_logged: 'is_logged',
             toggle_explorer: 'toggle_explorer~'
         }
-        comps = JS('{folder_content, editor, layout, modal}')
-        Object.keys(comps).forEach(def(k): comps[k] = comps[k].make();)
-        self.components = comps
+        comps = 'folder_content editor base_layout'.split(/ +/)
+        reg_as = {base_layout: 'layout'}
+        self.components = {(reg_as[c] or c):components[c].make() for c in comps }
 
 
     def _init_data(self):

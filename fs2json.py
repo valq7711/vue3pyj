@@ -4,6 +4,9 @@ import sys
 import hashlib
 from .storage import Storage
 
+LOG = None
+CDIR = os.path.dirname(__file__)
+
 def to_bytes(obj, charset='utf-8', errors='strict'):
         if obj is None:
             return None
@@ -46,7 +49,6 @@ def get_file(fp, parent_id ):
 
 def get_dir(pth_to_dir,  parent_id, files, dirs, dir_list = None,  file_mask = FILE_MASK_REX ):
     # {id:0,  name: '', parent: None,  content: []}
-    dir_list = dir_list
     ret = dict(id = get_id(),
                 name = os.path.split(pth_to_dir)[1],
                 parent = parent_id,
@@ -60,10 +62,13 @@ def get_dir(pth_to_dir,  parent_id, files, dirs, dir_list = None,  file_mask = F
                 ret['content'].append(fl['id'])
             else:
                 continue
-        elif dir_list == '*' or it in dir_list.keys():
-            d = get_dir(fp,  ret['id'], files, dirs, dir_list =='*' and '*' or dir_list[it], file_mask)
-            dirs[d['id']] = d
-            ret['content'].append(d['id'])
+        elif dir_list != None:
+            sub_dir_list = dir_list == '*' and '*' or \
+                       dir_list.get(it, dir_list.get('*') and '*')
+            if sub_dir_list != None:
+                d = get_dir(fp,  ret['id'], files, dirs, sub_dir_list, file_mask)
+                dirs[d['id']] = d
+                ret['content'].append(d['id'])
     return ret
 
 def dir_to_fs(root_d, dir_list = None,file_mask = FILE_MASK_REX):

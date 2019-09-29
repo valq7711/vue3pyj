@@ -119,7 +119,7 @@ def def_mode(conf, parserConf):
             sol = stream.sol()
             if sol:
                 indent = self.indent = stream.indentation()
-                if /^tag(_inline)?$/.test(self.scopes[-1].type)::
+                if /^tag(_inline)?$/.test(self.scopes[-1].type):
                     scope_offset = self.scopes[-1].offset
                     if stream.eatSpace():
                         line_offset = indent

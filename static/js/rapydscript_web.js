@@ -4733,7 +4733,7 @@ var ՐՏ_modules = {};
             return function() {
                 var start, expr, end;
                 start = S.token;
-                expr = parser();
+                expr = parser.apply(this, arguments);
                 if (expr === void 0) {
                     unexpected();
                 }
@@ -4799,12 +4799,26 @@ var ՐՏ_modules = {};
             }
             return ans;
         }
+        function block_statement() {
+            return statement(true);
+        }
         
-        var statement = (ՐՏ_118 = function statement() {
+        var statement = (ՐՏ_118 = function statement(expect_block) {
             var tmp_, dir, stat, type, start, func, chain, result, ctor, expectedType, actualType, tmp;
             if (is_("operator", "/") || is_("operator", "/=")) {
                 S.peeked = null;
                 S.token = S.input(S.token.value.slice(1));
+            }
+            if (expect_block) {
+                if (is_("punc", ":")) {
+                    return new ast.BlockStatement({
+                        start: S.token,
+                        body: block_(),
+                        end: prev()
+                    });
+                } else {
+                    unexpected();
+                }
             }
             tmp_ = S.token.type;
             if (tmp_ === "string") {
@@ -4826,13 +4840,7 @@ var ՐՏ_modules = {};
                 return simple_statement();
             } else if (tmp_ === "punc") {
                 tmp_ = S.token.value;
-                if (tmp_ === ":") {
-                    return new ast.BlockStatement({
-                        start: S.token,
-                        body: block_(),
-                        end: prev()
-                    });
-                } else if (tmp_ === "{" || tmp_ === "[" || tmp_ === "(") {
+                if (tmp_ === "{" || tmp_ === "[" || tmp_ === "(") {
                     return simple_statement();
                 } else if (tmp_ === ";") {
                     next();
@@ -4866,7 +4874,7 @@ var ՐՏ_modules = {};
                     return new ast.Debugger();
                 } else if (tmp_ === "do") {
                     return new ast.Do({
-                        body: in_loop(statement),
+                        body: in_loop(block_statement),
                         condition: function() {
                             var tmp;
                             expect(".");
@@ -4879,7 +4887,7 @@ var ՐՏ_modules = {};
                 } else if (tmp_ === "while") {
                     return new ast.While({
                         condition: expression(true),
-                        body: in_loop(statement)
+                        body: in_loop(block_statement)
                     });
                 } else if (tmp_ === "for") {
                     if (is_("name", "JS")) {
@@ -4975,7 +4983,7 @@ var ՐՏ_modules = {};
                 } else if (tmp_ === "with") {
                     return new ast.With({
                         expression: parenthesised(),
-                        body: statement()
+                        body: block_statement()
                     });
                 } else {
                     unexpected();
@@ -5089,7 +5097,7 @@ var ՐՏ_modules = {};
                 init: init,
                 name: lhs,
                 object: obj,
-                body: in_loop(statement)
+                body: in_loop(block_statement)
             });
         }
         function for_js() {
@@ -5097,7 +5105,7 @@ var ՐՏ_modules = {};
             condition = expression(true, true);
             return new ast.ForJS({
                 condition: condition,
-                body: in_loop(statement)
+                body: in_loop(block_statement)
             });
         }
         function get_class_in_scope(expr) {
@@ -5227,10 +5235,11 @@ var ՐՏ_modules = {};
         }
         function import_(from_import) {
             var ՐՏitr45, ՐՏidx45, ՐՏitr46, ՐՏidx46;
-            var ans, package_pref, name, tmp, key, alias, imp, from_pack_imp, cur_imported, classes, is_init_pyj, argnames, aname, argvar, obj, i;
+            var ans, imp_with, package_pref, name, tmp, key, alias, imp, from_pack_imp, cur_imported, classes, is_init_pyj, argnames, aname, argvar, obj, i;
             ans = new ast.Imports({
                 "imports": []
             });
+            imp_with = null;
             while (true) {
                 package_pref = "";
                 if (/^.+?__init__.pyj$/.test(options.filename || "")) {
@@ -5264,7 +5273,18 @@ var ՐՏ_modules = {};
                 }
                 alias = null;
                 if (!from_import) {
-                    if (is_("keyword", "as")) {
+                    if (imp_with === null) {
+                        if (is_("keyword", "with")) {
+                            imp_with = key;
+                            next();
+                            continue;
+                        } else {
+                            imp_with = "";
+                        }
+                    }
+                    if (imp_with) {
+                        key = imp_with + "." + key;
+                    } else if (is_("keyword", "as")) {
                         next();
                         alias = as_symbol(ast.SymbolAlias);
                     } else if (package_pref) {
@@ -5764,15 +5784,16 @@ var ՐՏ_modules = {};
         function if_() {
             var cond, body, belse;
             cond = expression(true);
-            body = statement();
+            body = block_statement();
             belse = null;
             if (is_("keyword", "elif") || is_("keyword", "else")) {
                 if (is_("keyword", "else")) {
                     next();
+                    belse = block_statement();
                 } else {
                     S.token.value = "if";
+                    belse = statement();
                 }
-                belse = statement();
             }
             return new ast.If({
                 condition: cond,
@@ -6300,8 +6321,9 @@ var ՐՏ_modules = {};
         }, ՐՏ_119 = embed_tokens(ՐՏ_119), ՐՏ_119);
         
         var object_ = (ՐՏ_120 = function object_() {
-            var maybe_dict_comprehension, first, a, start, type, computed, saw_starargs, key, name, ctx, orig, key_;
+            var maybe_dict_comprehension, must_be_comprehension, first, a, start, type, ctx, orig, key, name, key_, value;
             maybe_dict_comprehension = false;
+            must_be_comprehension = false;
             expect("{");
             first = true;
             a = [];
@@ -6314,81 +6336,83 @@ var ՐՏ_modules = {};
                 }
                 start = S.token;
                 type = start.type;
-                computed = false;
-                saw_starargs = false;
                 if (is_("operator", "*")) {
-                    saw_starargs = true;
                     if (!options.es6) {
                         croak("Spread operator in object literals is only allowed in ES6 mode");
                     }
                     a.push(maybe_unary(true));
-                } else if (first && peek().value !== ":") {
-                    maybe_dict_comprehension = true;
-                    key = expression(false);
-                    name = null;
+                    first = false;
+                    continue;
                 } else {
                     ctx = S.input.context();
                     orig = ctx.expect_object_literal_key;
                     ctx.expect_object_literal_key = true;
-                    if (is_("punc", "(")) {
-                        if (!options.es6) {
-                            croak("Computed properties are only allowed in ES6 mode");
-                        }
-                        expect("(");
+                    if (first && !(ՐՏ_in(peek().value, [ ":", ",", "}" ]))) {
+                        maybe_dict_comprehension = true;
+                        must_be_comprehension = !is_("punc", "(");
                         key = expression(false);
-                        expect(")");
-                        computed = true;
+                        name = null;
                     } else {
-                        key_ = as_property_name();
-                        name = key_.value;
-                        if (key_.type === "num") {
-                            key = new ast.Number({
-                                start: start,
-                                value: name,
-                                end: prev()
-                            });
-                        } else if (key_.type === "name" || key_.type === "keyword") {
-                            if (ՐՏ_in(name, [ "True", "False" ])) {
-                                key = new ast.Boolean({
+                        if (is_("punc", "(")) {
+                            if (!options.es6) {
+                                croak("Computed properties are only allowed in ES6 mode");
+                            }
+                            expect("(");
+                            key = expression(false);
+                            expect(")");
+                        } else {
+                            key_ = as_property_name();
+                            name = key_.value;
+                            if (key_.type === "num") {
+                                key = new ast.Number({
                                     start: start,
                                     value: name,
                                     end: prev()
                                 });
+                            } else if (key_.type === "name" || key_.type === "keyword") {
+                                if (ՐՏ_in(name, [ "True", "False" ])) {
+                                    key = new ast.Boolean({
+                                        start: start,
+                                        value: name,
+                                        end: prev()
+                                    });
+                                } else {
+                                    key = new ast.Identifier({
+                                        start: start,
+                                        value: name,
+                                        end: prev()
+                                    });
+                                }
                             } else {
-                                key = new ast.Identifier({
+                                key = new ast.String({
                                     start: start,
                                     value: name,
                                     end: prev()
                                 });
                             }
-                        } else {
-                            key = new ast.String({
-                                start: start,
-                                value: name,
-                                end: prev()
-                            });
                         }
                     }
                     ctx.expect_object_literal_key = orig;
-                    if (type === "name" && !is_("punc", ":")) {
-                        a.push(accessor_(name, start, false));
-                        continue;
-                    }
                 }
-                if (!saw_starargs) {
+                if (is_("punc") && ՐՏ_in(S.token.value, [ ",", "}" ]) && key instanceof ast.Identifier) {
+                    value = key;
+                } else {
                     expect(":");
-                    a.push(new ast.ObjectKeyVal({
-                        start: start,
-                        key: key,
-                        value: expression(false),
-                        end: prev()
+                    value = expression(false);
+                }
+                a.push(new ast.ObjectKeyVal({
+                    start: start,
+                    key: key,
+                    value: value,
+                    end: prev()
+                }));
+                if (first && is_("keyword", "for")) {
+                    return read_comprehension(new ast.DictComprehension({
+                        statement: maybe_dict_comprehension ? key : as_atom_node(a[0].start),
+                        value_statement: a[0].value
                     }));
-                    if (a.length === 1 && is_("keyword", "for")) {
-                        return read_comprehension(new ast.DictComprehension({
-                            statement: maybe_dict_comprehension ? key : as_atom_node(a[0].start),
-                            value_statement: a[0].value
-                        }));
-                    }
+                } else if (must_be_comprehension) {
+                    unexpected();
                 }
                 first = false;
             }
@@ -8462,7 +8486,9 @@ var ՐՏ_modules = {};
                         if (output.option("es6")) {
                             output.with_square(function() {
                                 self.init.elements.forEach(function(element, index) {
-                                    if (index) output.comma();
+                                    if (index) {
+                                        output.comma();
+                                    }
                                     element.print(output);
                                 });
                             });
@@ -8668,7 +8694,9 @@ var ՐՏ_modules = {};
                             if (output.option("es6")) {
                                 output.with_square(function() {
                                     self.init.elements.forEach(function(element, index) {
-                                        if (index) output.comma();
+                                        if (index) {
+                                            output.comma();
+                                        }
                                         element.print(output);
                                     });
                                 });
@@ -9793,7 +9821,9 @@ var ՐՏ_modules = {};
                     if (output.option("es6")) {
                         output.with_square(function() {
                             self.left.elements.forEach(function(element, index) {
-                                if (index) output.comma();
+                                if (index) {
+                                    output.comma();
+                                }
                                 element.print(output);
                             });
                         });

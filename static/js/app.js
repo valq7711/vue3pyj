@@ -70,7 +70,7 @@ function ՐՏ_type(obj) {
     return obj && obj.constructor && obj.constructor.name ? obj.constructor.name : Object.prototype.toString.call(obj).slice(8, -1);
 }
 function ՐՏ_eq(a, b) {
-    var ՐՏitr64, ՐՏidx64;
+    var ՐՏitr66, ՐՏidx66;
     var i;
     if (a === b) {
         return true;
@@ -95,9 +95,9 @@ function ՐՏ_eq(a, b) {
         if (Object.keys(a).length !== Object.keys(b).length) {
             return false;
         }
-        ՐՏitr64 = ՐՏ_Iterable(a);
-        for (ՐՏidx64 = 0; ՐՏidx64 < ՐՏitr64.length; ՐՏidx64++) {
-            i = ՐՏitr64[ՐՏidx64];
+        ՐՏitr66 = ՐՏ_Iterable(a);
+        for (ՐՏidx66 = 0; ՐՏidx66 < ՐՏitr66.length; ՐՏidx66++) {
+            i = ՐՏitr66[ՐՏidx66];
             if (!ՐՏ_eq(a[i], b[i])) {
                 return false;
             }
@@ -3373,28 +3373,26 @@ var ՐՏ_modules = {};
                 if (sol) {
                     indent = self.indent = stream.indentation();
                     if (/^tag(_inline)?$/.test(self.scopes[self.scopes.length-1].type)) {
-                        {
-                            scope_offset = self.scopes[self.scopes.length-1].offset;
-                            if (stream.eatSpace()) {
-                                line_offset = indent;
-                                if (line_offset > scope_offset) {
-                                    self.push_scope(stream, "tag");
-                                } else if (line_offset < scope_offset && self.dedent_process(stream).error) {
-                                    stream.skipToEnd();
-                                    return ERRORCLASS;
-                                } else if (self.scopes[self.scopes.length-1].type === "tag_inline") {
-                                    while (self.scopes[self.scopes.length-1].type === "tag_inline") {
-                                        self.scopes.pop();
-                                    }
+                        scope_offset = self.scopes[self.scopes.length-1].offset;
+                        if (stream.eatSpace()) {
+                            line_offset = indent;
+                            if (line_offset > scope_offset) {
+                                self.push_scope(stream, "tag");
+                            } else if (line_offset < scope_offset && self.dedent_process(stream).error) {
+                                stream.skipToEnd();
+                                return ERRORCLASS;
+                            } else if (self.scopes[self.scopes.length-1].type === "tag_inline") {
+                                while (self.scopes[self.scopes.length-1].type === "tag_inline") {
+                                    self.scopes.pop();
                                 }
-                                return null;
-                            } else {
-                                style = self.token_baseInner(stream);
-                                if (scope_offset > 0 && self.dedent_process(stream).error) {
-                                    style += " " + ERRORCLASS;
-                                }
-                                return style;
                             }
+                            return null;
+                        } else {
+                            style = self.token_baseInner(stream);
+                            if (scope_offset > 0 && self.dedent_process(stream).error) {
+                                style += " " + ERRORCLASS;
+                            }
+                            return style;
                         }
                     }
                 }
@@ -6869,25 +6867,29 @@ var ՐՏ_modules = {};
     
     var common = ՐՏ_modules["asset.common"];
     
-    var confirm = ՐՏ_modules["components.confirm"];
-    var error = ՐՏ_modules["components.error"];
-    var app_selector = ՐՏ_modules["components.app_selector"];
-    var login = ՐՏ_modules["components.login"];
-    var folder_content = ՐՏ_modules["components.folder_content"];
-    var editor = ՐՏ_modules["components.editor"];
-    var layout = ՐՏ_modules["components.base_layout"];
-    var modal = ՐՏ_modules["components.modal"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
+    var components = ՐՏ_modules["components"];
     
     var Store = ՐՏ_modules["store.root"].Store;
     
     Vue.use(Store);
     function reg_components() {
-        var comps;
-        comps = {confirm, error, app_selector, login, modal};
-        Object.keys(comps).forEach(function(k) {
-            comps[k] = comps[k].make();
-        });
-        Vue.options.components = comps;
+        var comps, c;
+        comps = "confirm error app_selector login modal".split(/ +/);
+        Vue.options.components = (function() {
+            var ՐՏidx64, ՐՏitr64 = ՐՏ_Iterable(comps), ՐՏres = {}, c;
+            for (ՐՏidx64 = 0; ՐՏidx64 < ՐՏitr64.length; ՐՏidx64++) {
+                c = ՐՏitr64[ՐՏidx64];
+                ՐՏres[c] = components[c].make();
+            }
+            return ՐՏres;
+        })();
     }
     reg_components();
     web23py = document.getElementsByTagName("meta")[0].dataset.web23py;
@@ -6895,7 +6897,7 @@ var ՐՏ_modules = {};
     vc = new V_collector();
     var App = (ՐՏ_62 = class App extends RS_vue {
         constructor () {
-            var comps;
+            var comps, reg_as, c;
             super(vc);
             var self = this;
             self.store = store;
@@ -6907,11 +6909,18 @@ var ՐՏ_modules = {};
                 is_logged: "is_logged",
                 toggle_explorer: "toggle_explorer~"
             };
-            comps = {folder_content, editor, layout, modal};
-            Object.keys(comps).forEach(function(k) {
-                comps[k] = comps[k].make();
-            });
-            self.components = comps;
+            comps = "folder_content editor base_layout".split(/ +/);
+            reg_as = {
+                base_layout: "layout"
+            };
+            self.components = (function() {
+                var ՐՏidx65, ՐՏitr65 = ՐՏ_Iterable(comps), ՐՏres = {}, c;
+                for (ՐՏidx65 = 0; ՐՏidx65 < ՐՏitr65.length; ՐՏidx65++) {
+                    c = ՐՏitr65[ՐՏidx65];
+                    ՐՏres[reg_as[c] || c] = components[c].make();
+                }
+                return ՐՏres;
+            })();
         }
         _init_data () {
             var self = this;
