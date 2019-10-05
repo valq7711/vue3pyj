@@ -1,10 +1,18 @@
 (function(){
 "use strict";
 var ՐՏ_1;
+function ՐՏ_extends(child, parent) {
+    child.prototype = Object.create(parent.prototype);
+    child.prototype.__base__ = parent;
+    child.prototype.constructor = child;
+}
 function ՐՏ_Iterable(iterable) {
     var tmp;
     if (iterable.constructor === [].constructor || iterable.constructor === "".constructor || (tmp = Array.prototype.slice.call(iterable)).length) {
         return tmp || iterable;
+    }
+    if (Set && iterable.constructor === Set) {
+        return Array.from(iterable);
     }
     return Object.keys(iterable);
 }
@@ -38,48 +46,57 @@ function ՐՏ_eq(a, b) {
     if (a === b) {
         return true;
     }
-    if (Array.isArray(a) && Array.isArray(b) || a instanceof Object && b instanceof Object) {
-        if (a.constructor !== b.constructor || a.length !== b.length) {
+    if (a === void 0 || b === void 0 || a === null || b === null) {
+        return false;
+    }
+    if (a.constructor !== b.constructor) {
+        return false;
+    }
+    if (Array.isArray(a)) {
+        if (a.length !== b.length) {
             return false;
         }
-        if (Array.isArray(a)) {
-            for (i = 0; i < a.length; i++) {
-                if (!ՐՏ_eq(a[i], b[i])) {
-                    return false;
-                }
-            }
-        } else {
-            if (Object.keys(a).length !== Object.keys(b).length) {
+        for (i = 0; i < a.length; i++) {
+            if (!ՐՏ_eq(a[i], b[i])) {
                 return false;
-            }
-            ՐՏitr6 = ՐՏ_Iterable(a);
-            for (ՐՏidx6 = 0; ՐՏidx6 < ՐՏitr6.length; ՐՏidx6++) {
-                i = ՐՏitr6[ՐՏidx6];
-                if (!ՐՏ_eq(a[i], b[i])) {
-                    return false;
-                }
             }
         }
         return true;
+    } else if (a.constructor === Object) {
+        if (Object.keys(a).length !== Object.keys(b).length) {
+            return false;
+        }
+        ՐՏitr6 = ՐՏ_Iterable(a);
+        for (ՐՏidx6 = 0; ՐՏidx6 < ՐՏitr6.length; ՐՏidx6++) {
+            i = ՐՏitr6[ՐՏidx6];
+            if (!ՐՏ_eq(a[i], b[i])) {
+                return false;
+            }
+        }
+        return true;
+    } else if (Set && a.constructor === Set || Map && a.constructor === Map) {
+        if (a.size !== b.size) {
+            return false;
+        }
+        for (i of a) {
+            if (!b.has(i)) {
+                return false;
+            }
+        }
+        return true;
+    } else if (a.constructor === Date) {
+        return a.getTime() === b.getTime();
+    } else if (typeof a.__eq__ === "function") {
+        return a.__eq__(b);
     }
     return false;
 }
 var ՐՏ_modules = {};
-ՐՏ_modules["asset"] = {};
 ՐՏ_modules["asset.fs_path"] = {};
 ՐՏ_modules["asset.common"] = {};
 ՐՏ_modules["asset.rs_require"] = {};
+ՐՏ_modules["asset"] = {};
 ՐՏ_modules["load_js"] = {};
-
-(function(){
-    var __name__ = "asset";
-
-    ՐՏ_modules["asset"]["fs_path"] = ՐՏ_modules["asset.fs_path"];
-
-    ՐՏ_modules["asset"]["common"] = ՐՏ_modules["asset.common"];
-
-    ՐՏ_modules["asset"]["rs_require"] = ՐՏ_modules["asset.rs_require"];
-})();
 
 (function(){
     var __name__ = "asset.fs_path";
@@ -334,61 +351,6 @@ var ՐՏ_modules = {};
         ret.__name__ = fun.__name__ || fun.name;
         return ret;
     }
-    function __asyncer(fun) {
-        var ctx, ret;
-        ctx = {
-            self: void 0,
-            args: void 0
-        };
-        function pret(ok, err) {
-            function inner(f, ret_v, ret_throw) {
-                var v;
-                if (ret_throw) {
-                    v = ret_throw;
-                } else {
-                    try {
-                        f = f || fun.apply(ctx.self, ctx.args);
-                        v = f.next(ret_v);
-                    } catch (ՐՏ_Exception) {
-                        var e = ՐՏ_Exception;
-                        err(e);
-                        return;
-                    }
-                }
-                if (!v.done) {
-                    if (v.value instanceof Promise) {
-                        v.value.then(function(ret_v) {
-                            inner(f, ret_v);
-                        }, function(e) {
-                            var v;
-                            try {
-                                v = f.throw(e);
-                            } catch (ՐՏ_Exception) {
-                                var e = ՐՏ_Exception;
-                                err(e);
-                                return;
-                            }
-                            inner(f, null, v);
-                        });
-                    } else {
-                        Promise.resolve(v.value).then(function(ret_v) {
-                            inner(f, ret_v);
-                        });
-                    }
-                } else {
-                    ok(v.value);
-                }
-            }
-            inner();
-        }
-        ret = function() {
-            ctx.self = this;
-            ctx.args = arguments;
-            return new Promise(pret);
-        };
-        ret.__name__ = fun.__name__ || fun.name;
-        return ret;
-    }
     function upload_text() {
         function prom(ok, err) {
             var el, ret;
@@ -517,33 +479,47 @@ var ՐՏ_modules = {};
         return mousedn;
     }
     function blur_click_listener(el, cb) {
-        var ret, blur;
+        var ret, blur, last_id, listen;
         ret = {};
-        blur = false;
+        blur = {};
+        last_id = 0;
+        listen = false;
         function doc_click_cap(e) {
-            blur = true;
+            var id;
+            ++last_id;
+            id = last_id;
+            blur[last_id] = true;
             setTimeout(function() {
-                blur && cb(e);
+                var _blur;
+                _blur = blur[id];
+                delete blur[id];
+                _blur && cb(e);
             }, 0);
         }
         function el_click(e) {
-            blur = false;
+            blur[last_id] = false;
         }
         ret.start = function() {
+            if (listen) {
+                return;
+            }
             document.addEventListener("click", doc_click_cap, true);
             el.addEventListener("click", el_click, true);
+            listen = true;
         };
         ret.stop = function() {
+            if (!listen) {
+                return;
+            }
             document.removeEventListener("click", doc_click_cap, true);
             el.removeEventListener("click", el_click, true);
+            listen = false;
         };
         return ret;
     }
     ՐՏ_modules["asset.common"]["Merge_call"] = Merge_call;
 
     ՐՏ_modules["asset.common"]["asyncer"] = asyncer;
-
-    ՐՏ_modules["asset.common"]["__asyncer"] = __asyncer;
 
     ՐՏ_modules["asset.common"]["upload_text"] = upload_text;
 
@@ -711,6 +687,16 @@ var ՐՏ_modules = {};
 })();
 
 (function(){
+    var __name__ = "asset";
+
+    ՐՏ_modules["asset"]["fs_path"] = ՐՏ_modules["asset.fs_path"];
+
+    ՐՏ_modules["asset"]["common"] = ՐՏ_modules["asset.common"];
+
+    ՐՏ_modules["asset"]["rs_require"] = ՐՏ_modules["asset.rs_require"];
+})();
+
+(function(){
     var __name__ = "load_js";
     function load(rs_req) {
         function get_mods() {
@@ -740,8 +726,10 @@ var ՐՏ_modules = {};
         return "hi!";
     };
     function init() {
-        var js_root_dir, rs_req;
-        js_root_dir = window.location.pathname.split("/", 2).join("/") + "/static/js/";
+        var static_ver, js_root_dir, rs_req;
+        static_ver = document.getElementsByTagName("meta")[0].dataset.static_ver;
+        static_ver = static_ver && "/_" + static_ver || "";
+        js_root_dir = window.location.pathname.split("/", 2).join("/") + "/static" + static_ver + "/js/";
         window.rs_req = rs_req = new rs_require.RS_require({
             js_root_dir: js_root_dir
         });

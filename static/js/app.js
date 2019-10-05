@@ -3,15 +3,6 @@ var exports = {};
 (function(){
 "use strict";
 var ՐՏ_1, ՐՏ_2, ՐՏ_17, ՐՏ_42, ՐՏ_43, ՐՏ_44, ՐՏ_45, ՐՏ_46, ՐՏ_49, ՐՏ_50, ՐՏ_51, ՐՏ_52, ՐՏ_56, ՐՏ_59, ՐՏ_60, ՐՏ_61;
-function enumerate(item) {
-    var arr, iter, i;
-    arr = [];
-    iter = ՐՏ_Iterable(item);
-    for (i = 0; i < iter.length; i++) {
-        arr[arr.length] = [ i, item[i] ];
-    }
-    return arr;
-}
 function ՐՏ_extends(child, parent) {
     child.prototype = Object.create(parent.prototype);
     child.prototype.__base__ = parent;
@@ -70,7 +61,7 @@ function ՐՏ_type(obj) {
     return obj && obj.constructor && obj.constructor.name ? obj.constructor.name : Object.prototype.toString.call(obj).slice(8, -1);
 }
 function ՐՏ_eq(a, b) {
-    var ՐՏitr66, ՐՏidx66;
+    var ՐՏitr64, ՐՏidx64;
     var i;
     if (a === b) {
         return true;
@@ -95,9 +86,9 @@ function ՐՏ_eq(a, b) {
         if (Object.keys(a).length !== Object.keys(b).length) {
             return false;
         }
-        ՐՏitr66 = ՐՏ_Iterable(a);
-        for (ՐՏidx66 = 0; ՐՏidx66 < ՐՏitr66.length; ՐՏidx66++) {
-            i = ՐՏitr66[ՐՏidx66];
+        ՐՏitr64 = ՐՏ_Iterable(a);
+        for (ՐՏidx64 = 0; ՐՏidx64 < ՐՏitr64.length; ՐՏidx64++) {
+            i = ՐՏitr64[ՐՏidx64];
             if (!ՐՏ_eq(a[i], b[i])) {
                 return false;
             }
@@ -1045,25 +1036,41 @@ var ՐՏ_modules = {};
         return mousedn;
     }
     function blur_click_listener(el, cb) {
-        var ret, blur;
+        var ret, blur, last_id, listen;
         ret = {};
-        blur = false;
+        blur = {};
+        last_id = 0;
+        listen = false;
         function doc_click_cap(e) {
-            blur = true;
+            var id;
+            ++last_id;
+            id = last_id;
+            blur[last_id] = true;
             setTimeout(function() {
-                blur && cb(e);
+                var _blur;
+                _blur = blur[id];
+                delete blur[id];
+                _blur && cb(e);
             }, 0);
         }
         function el_click(e) {
-            blur = false;
+            blur[last_id] = false;
         }
         ret.start = function() {
+            if (listen) {
+                return;
+            }
             document.addEventListener("click", doc_click_cap, true);
             el.addEventListener("click", el_click, true);
+            listen = true;
         };
         ret.stop = function() {
+            if (!listen) {
+                return;
+            }
             document.removeEventListener("click", doc_click_cap, true);
             el.removeEventListener("click", el_click, true);
+            listen = false;
         };
         return ret;
     }
@@ -4555,7 +4562,8 @@ var ՐՏ_modules = {};
                 change_dir: "/explorer.set_dir~",
                 click: "/explorer.click_item*",
                 action: "/explorer.doit*",
-                basket: "/explorer.basket"
+                basket: "/explorer.basket",
+                shown: "show_explorer"
             };
         }
         _init_data () {
@@ -4650,12 +4658,19 @@ var ՐՏ_modules = {};
             }
             return ret;
         }
+        shown (n) {
+            var self = this;
+            if (n) {
+                self.listener.start();
+            } else {
+                self.listener.stop();
+            }
+        }
         mounted () {
             var self = this;
-            self.listener = blur_click_listener(self.$el, function() {
-                self.$emit("blur");
+            self.listener = blur_click_listener(self.$el, function(e) {
+                self.$emit("blur", e);
             });
-            self.listener.start();
         }
         beforeDestroy () {
             var self = this;
@@ -4682,6 +4697,11 @@ var ՐՏ_modules = {};
                 enumerable: false, 
                 writable: true, 
                 value: vc.computed(ՐՏ_45.prototype.rows_c)
+            },
+            shown: {
+                enumerable: false, 
+                writable: true, 
+                value: vc.watch(ՐՏ_45.prototype.shown)
             }
         });
         ;
@@ -6203,7 +6223,7 @@ var ՐՏ_modules = {};
 
 (function(){
     var __name__ = "app_menu";
-    function default_() {
+    function get_menu(web23py) {
         var user, ret;
         user = {
             label: "Logout",
@@ -6239,7 +6259,14 @@ var ՐՏ_modules = {};
             }, user, {
                 label: "flash",
                 slot: "flash"
-            }, {
+            }, web23py === "web2py" ? {
+                label: "Errors",
+                href: "../../admin/default/errors/${w23p_app}",
+                attrs: {
+                    target: "_blank",
+                    rel: "noopener"
+                }
+            } : {
                 label: "Reload Apps",
                 name: "reload_apps",
                 href: "#cmd:reload_apps"
@@ -6247,78 +6274,7 @@ var ՐՏ_modules = {};
         };
         return ret;
     }
-    function authorized() {
-        var user_logged_in, ret;
-        user_logged_in = {
-            label: '<i class="fa fa-user"></i> ${user_name}',
-            subitems: [ {
-                label: "Выйти",
-                href: "#cmd:logout"
-            }, {
-                label: "Профиль",
-                href: "#"
-            } ]
-        };
-        ret = default_();
-        replace_by_name(ret.right, "login", user_logged_in);
-        return ret;
-    }
-    function get_factory() {
-        var ret;
-        ret = {
-            default: default_,
-            authorized: authorized
-        };
-        return ret;
-    }
-    function replace_by_name(items, name, obj) {
-        var ՐՏitr60, ՐՏidx60;
-        var i, it, subs, ret;
-        if (!name) {
-            throw new Error("name required");
-        }
-        ՐՏitr60 = ՐՏ_Iterable(enumerate(items));
-        for (ՐՏidx60 = 0; ՐՏidx60 < ՐՏitr60.length; ՐՏidx60++) {
-            [i, it] = ՐՏitr60[ՐՏidx60];
-            if (it.name === name) {
-                items[i] = obj;
-                return true;
-            }
-            if (subs = it.items || it.subitems) {
-                if (ret = replace_by_name(subs, name, obj)) {
-                    return ret;
-                }
-            }
-        }
-    }
-    function menu_by_name(items, name) {
-        var ՐՏitr61, ՐՏidx61;
-        var it, subs, ret;
-        if (!name) {
-            throw new Error("name required");
-        }
-        ՐՏitr61 = ՐՏ_Iterable(items);
-        for (ՐՏidx61 = 0; ՐՏidx61 < ՐՏitr61.length; ՐՏidx61++) {
-            it = ՐՏitr61[ՐՏidx61];
-            if (it.name === name) {
-                return it;
-            }
-            if (subs = it.items || it.subitems) {
-                if (ret = menu_by_name(subs, name)) {
-                    return ret;
-                }
-            }
-        }
-    }
-    ՐՏ_modules["app_menu"]["default_"] = default_;
-
-    ՐՏ_modules["app_menu"]["authorized"] = authorized;
-
-    ՐՏ_modules["app_menu"]["get_factory"] = get_factory;
-
-    ՐՏ_modules["app_menu"]["replace_by_name"] = replace_by_name;
-
-    ՐՏ_modules["app_menu"]["menu_by_name"] = menu_by_name;
+    ՐՏ_modules["app_menu"]["get_menu"] = get_menu;
 })();
 
 (function(){
@@ -6356,7 +6312,7 @@ var ՐՏ_modules = {};
                 cargs: null
             },
             is_busy: true,
-            menus: app_menu.get_factory().default(),
+            menus: null,
             web23py: null,
             w23p_app: null,
             w23p_app_list: null,
@@ -6487,10 +6443,11 @@ var ՐՏ_modules = {};
             var self_app, api_baseURL, html_dir, fs_refresher;
             self.state_api = new State(self.vue, self.getter_factory.bind(self));
             self.state_api.state.web23py = web23py;
+            self.state_api.state.menus = app_menu.get_menu(web23py);
             self.actions = vc._actions;
             self_app = window.location.pathname.split("/", 2)[1];
             self.api = {};
-            api_baseURL = web23py === "web3py" ? self_app : self_app + "/default/call/json";
+            api_baseURL = web23py === "web3py" ? self_app : self_app + "/default/api";
             self.api.server = new server.API(rs_req.get("axios.min"), "/" + api_baseURL, self.$bus, function() {
                 return self.dispatch("start_modal", "login");
             });
@@ -6543,7 +6500,7 @@ var ՐՏ_modules = {};
             }
             self.$on("server", on_server);
             function process_file(cmd, fid) {
-                var ՐՏitr62, ՐՏidx62;
+                var ՐՏitr60, ՐՏidx60;
                 var fs, fdata, content, frm_data, k, post_data;
                 fs = self.api.fs;
                 fdata = fs.get_info(fid, true);
@@ -6553,19 +6510,21 @@ var ՐՏ_modules = {};
                 fdata.w23p_app = self.get("w23p_app");
                 if (cmd === "write_file") {
                     frm_data = new FormData();
-                    ՐՏitr62 = ՐՏ_Iterable(Object.keys(fdata));
-                    for (ՐՏidx62 = 0; ՐՏidx62 < ՐՏitr62.length; ՐՏidx62++) {
-                        k = ՐՏitr62[ՐՏidx62];
+                    ՐՏitr60 = ՐՏ_Iterable(Object.keys(fdata));
+                    for (ՐՏidx60 = 0; ՐՏidx60 < ՐՏitr60.length; ՐՏidx60++) {
+                        k = ՐՏitr60[ՐՏidx60];
                         frm_data.append(k, fdata[k]);
                     }
                     frm_data.append("content", new Blob([ content ], {
                         type: "text/plain"
                     }));
                     post_data = frm_data;
-                } else {
+                } else if (cmd === "del_file") {
                     post_data = {
                         fdata: fdata
                     };
+                } else {
+                    throw new Error("unknown command: " + cmd);
                 }
                 self.api.server.post(cmd, post_data).then(function(resp) {
                     var e;
@@ -6588,14 +6547,14 @@ var ՐՏ_modules = {};
             });
         }
         search (r) {
-            var ՐՏitr63, ՐՏidx63;
+            var ՐՏitr61, ՐՏidx61;
             var self = this;
             var fs, ret, fid, obj;
             fs = self.api.fs;
             ret = [];
-            ՐՏitr63 = ՐՏ_Iterable(fs.files);
-            for (ՐՏidx63 = 0; ՐՏidx63 < ՐՏitr63.length; ՐՏidx63++) {
-                fid = ՐՏitr63[ՐՏidx63];
+            ՐՏitr61 = ՐՏ_Iterable(fs.files);
+            for (ՐՏidx61 = 0; ՐՏidx61 < ՐՏitr61.length; ՐՏidx61++) {
+                fid = ՐՏitr61[ՐՏidx61];
                 obj = fs.files[fid];
                 if (r.test(obj.content)) {
                     ret.push([ fid, fs.path_by_id(fid) ]);
@@ -6861,7 +6820,7 @@ var ՐՏ_modules = {};
 
     var ՐՏ_62;
     var app_templ, web23py, vc;
-    app_templ = "\n<div>\n    <layout>\n        <div  style = 'width:100%; padding: 0 10px;'>\n            <div  v-show = 'show_explorer' class = 'explorer'>\n                <folder_content  @blur = 'toggle_explorer(false)'></folder_content>\n            </div>\n            <editor></editor>\n        </div>\n    </layout>\n</div>\n";
+    app_templ = "\n<div>\n    <layout>\n        <div  style = 'width:100%; padding: 0 10px;'>\n            <div  v-show = 'show_explorer' class = 'explorer'>\n                <folder_content  @blur = 'hide_explorer($event)'></folder_content>\n            </div>\n            <editor></editor>\n        </div>\n    </layout>\n</div>\n";
     var RS_vue = ՐՏ_modules["asset.rs_vue"].RS_vue;
     var V_collector = ՐՏ_modules["asset.rs_vue"].V_collector;
     
@@ -6883,9 +6842,9 @@ var ՐՏ_modules = {};
         var comps, c;
         comps = "confirm error app_selector login modal".split(/ +/);
         Vue.options.components = (function() {
-            var ՐՏidx64, ՐՏitr64 = ՐՏ_Iterable(comps), ՐՏres = {}, c;
-            for (ՐՏidx64 = 0; ՐՏidx64 < ՐՏitr64.length; ՐՏidx64++) {
-                c = ՐՏitr64[ՐՏidx64];
+            var ՐՏidx62, ՐՏitr62 = ՐՏ_Iterable(comps), ՐՏres = {}, c;
+            for (ՐՏidx62 = 0; ՐՏidx62 < ՐՏitr62.length; ՐՏidx62++) {
+                c = ՐՏitr62[ՐՏidx62];
                 ՐՏres[c] = components[c].make();
             }
             return ՐՏres;
@@ -6914,9 +6873,9 @@ var ՐՏ_modules = {};
                 base_layout: "layout"
             };
             self.components = (function() {
-                var ՐՏidx65, ՐՏitr65 = ՐՏ_Iterable(comps), ՐՏres = {}, c;
-                for (ՐՏidx65 = 0; ՐՏidx65 < ՐՏitr65.length; ՐՏidx65++) {
-                    c = ՐՏitr65[ՐՏidx65];
+                var ՐՏidx63, ՐՏitr63 = ՐՏ_Iterable(comps), ՐՏres = {}, c;
+                for (ՐՏidx63 = 0; ՐՏidx63 < ՐՏitr63.length; ՐՏidx63++) {
+                    c = ՐՏitr63[ՐՏidx63];
                     ՐՏres[reg_as[c] || c] = components[c].make();
                 }
                 return ՐՏres;
@@ -6925,6 +6884,14 @@ var ՐՏ_modules = {};
         _init_data () {
             var self = this;
             return {};
+        }
+        hide_explorer (e) {
+            var self = this;
+            if (e.target.style.display !== "none") {
+                setTimeout(function() {
+                    self.toggle_explorer(false);
+                }, 100);
+            }
         }
         *mounted () {
             var self = this;
@@ -6947,6 +6914,11 @@ var ՐՏ_modules = {};
         }
     }, (function(){
         Object.defineProperties(ՐՏ_62.prototype, {
+            hide_explorer: {
+                enumerable: false, 
+                writable: true, 
+                value: vc.meth(ՐՏ_62.prototype.hide_explorer)
+            },
             mounted: {
                 enumerable: false, 
                 writable: true, 
@@ -6960,11 +6932,6 @@ var ՐՏ_modules = {};
         app = new App();
         new Vue(app).$mount(el || "#app");
     };
-    function main() {
-    }
-    if (__name__ === "__main__") {
-        main();
-    }
 })();
 })();
 

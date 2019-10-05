@@ -1,1 +1,0 @@
-# vuepy_core
