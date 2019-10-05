@@ -28,7 +28,7 @@ class API:
         .then(def(r):
                   self.done(r)
                   return r;
-              , def(r): return self.raise_error(r, {meth:meth, f:f, args:args} );)
+              , def(r): return self.raise_error(r, {meth, f, args} );)
         return ret
 
     def get(self, f, args):
@@ -50,6 +50,4 @@ class API:
         if self.bus:
             self.bus.$emit('server', {event: 'error', emitter: self, data: err})
         return Promise.reject(err)
-
-
 

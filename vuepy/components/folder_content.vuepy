@@ -176,6 +176,7 @@ class Folder_content(RS_vue):
             click:'/explorer.click_item*',
             action:'/explorer.doit*',
             basket:'/explorer.basket',
+            shown: 'show_explorer'
         }
 
     def _init_data(self):
@@ -236,9 +237,15 @@ class Folder_content(RS_vue):
             ret.push(rec)
         return ret
 
+    @vc.watch
+    def shown(self, n):
+        if n:
+            self.listener.start()
+        else:
+            self.listener.stop()
+
     def mounted(self):
-        self.listener = blur_click_listener(self.$el, def(): self.$emit('blur');)
-        self.listener.start()
+        self.listener = blur_click_listener(self.$el, def(e): self.$emit('blur', e);)
 
     def beforeDestroy(self):
         self.listener.stop()

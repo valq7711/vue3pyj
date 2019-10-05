@@ -4,7 +4,6 @@ from asset.fs import FS
 from asset.vuepy_compiler import vuepy_compile, rs_compile
 import asset.vuepy_output as vuepy_output
 import .editor, .explorer
-#import api.server as server
 import server
 import app_menu
 
@@ -98,11 +97,12 @@ class Store(RS_store):
         # api
         self_app = window.location.pathname.split('/',2)[1]
         self.api = {}
-        api_baseURL = web23py is 'web3py'? self_app : self_app + '/default/call/json'
-        self.api.server = server.API(rs_req.get('axios.min'),
-                                     '/' + api_baseURL,
-                                     self.$bus,
-                                     def(): return self.dispatch('start_modal', 'login');
+        api_baseURL = web23py is 'web3py'? self_app : self_app + '/default/api'
+        self.api.server = server.API(
+            rs_req.get('axios.min'),
+            '/' + api_baseURL,
+            self.$bus,
+            def(): return self.dispatch('start_modal', 'login');
         )
         self.api.fs = FS()
         self.api.CM = rs_req.get('codemirror/lib/codemirror')
@@ -119,8 +119,8 @@ class Store(RS_store):
                         pth[0] is 'root' or not pth[0] and pth.shift()
                         pth[0] = html_dir[web23py] # replace `vuepy`
                         return pth.join('/') + '.html'
-            , 'js': '/static/js/',
-            'css': '/static/css/',
+            ,'js': '/static/js/'
+            ,'css': '/static/css/'
          }
 
         # modules
@@ -131,9 +131,12 @@ class Store(RS_store):
         self.$on('fs_restored',fs_refresher)
         self.$on('fs_changed',fs_refresher)
 
-        self.state_api.vm.$watch('state.show_explorer', def(n,o):
-                                     if not n:
-                                         self.commit('/explorer.save_as', None)
+        # clear `save_as` on hide explorer
+        self.state_api.vm.$watch(
+            'state.show_explorer',
+            def(n,o):
+                 if not n:
+                     self.commit('/explorer.save_as', None)
         )
 
         # server events
@@ -161,8 +164,10 @@ class Store(RS_store):
                     frm_data.append(k, fdata[k])
                 frm_data.append('content', new Blob([content], {type:'text/plain'}))
                 post_data = frm_data
-            else: #del
+            elif cmd is 'del_file':
                 post_data = {fdata: fdata}
+            else:
+                raise Error('unknown command: ' + cmd)
 
             self.api.server.post(cmd, post_data) \
               .then( def(resp):

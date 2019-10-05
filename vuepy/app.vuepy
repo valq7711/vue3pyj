@@ -2,9 +2,8 @@ v-def app_templ:
     div:
         layout:
             div(style = 'width:100%; padding: 0 10px;'):
-                #modal:
                 div(v-show = 'show_explorer', class = 'explorer'):
-                    folder_content(@blur = 'toggle_explorer(false)'):
+                    folder_content(@blur = 'hide_explorer($event)'):
                 editor:
 
 v-pyj:
@@ -13,7 +12,7 @@ import_amd vue as Vue, codemirror/lib/codemirror as CodeMirror, rapydscript_web 
 import_amd axios.min as axios
 
 from asset.rs_vue import RS_vue, V_collector
-import asset.common as common
+from asset import common
 
 import components with \
     confirm, error, app_selector, login,\
@@ -47,17 +46,19 @@ class App(RS_vue):
         reg_as = {base_layout: 'layout'}
         self.components = {(reg_as[c] or c):components[c].make() for c in comps }
 
-
     def _init_data(self):
         return {}
+
+    @vc.meth
+    def hide_explorer(self, e):
+        if  e.target.style.display != 'none':
+            setTimeout(def(): self.toggle_explorer(False);, 100)
 
     @common.asyncer
     def mounted(self):
         store.commit('toggle_busy', False)
         while not self.is_logged:
             yield self.try_connect()
-            #store.commit('toggle_busy', False)
-            #logged = yield store.dispatch('start_modal', 'login')
         store.commit('toggle_busy', True)
         yield store.dispatch('w23p_app_list')
         store.commit('toggle_busy', False)
@@ -71,8 +72,4 @@ exports.start = def(el):
     app = App()
     (new Vue(app)).$mount(el or '#app')
 
-def main():
-    pass
-if __name__=='__main__':
-    main()
 ---
