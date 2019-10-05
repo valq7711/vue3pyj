@@ -41,7 +41,7 @@ def logout():
 @action('index')
 @action.uses('index.html')
 def index():
-    return dict(web23py='web3py', title = 'Vue3pyj')
+    return dict(web23py='web3py', title = 'Vue3pyj', static_version ='')
 
 APPS_FOLDER = os.environ['PY4WEB_APPS_FOLDER']
 
