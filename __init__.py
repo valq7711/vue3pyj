@@ -1,5 +1,5 @@
 import os, re
-from py4web import action, abort, request, Session
+from py4web import action, abort, request, Session, URL
 from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
@@ -41,7 +41,11 @@ def logout():
 @action('index')
 @action.uses('index.html')
 def index():
-    return dict(web23py='web3py', title = 'Vue3pyj', static_version ='')
+    return dict(web23py='web3py',
+                title = 'Vue3pyj',
+                static_version ='',
+                app_root = URL().rstrip('/')
+    )
 
 APPS_FOLDER = os.environ['PY4WEB_APPS_FOLDER']
 
@@ -61,7 +65,7 @@ def get_fs(w23p_app = None):
     dir_list = {
         'controllers':'*',
         'static': {
-            'js': '*',
+            'js': {},
             'css': '*',
             'components': '*',
         },
@@ -69,7 +73,8 @@ def get_fs(w23p_app = None):
         'models':'*',
         'views':'*',
         'templates':'*',
-        'vuepy':'*'
+        'vuepy':'*',
+        'RapydScript':{'src':'*', 'test':'*'},
     }
     app_folder = os.path.join(APPS_FOLDER, w23p_app)
     ret = fs2json.dir_to_fs(app_folder, dir_list, file_mask)
