@@ -1,0 +1,216 @@
+@font-face { font-family: Roboto;
+            src: url(../fonts/Roboto-Medium.ttf) format('truetype');
+            font-weight: 500;
+}
+@font-face { font-family: Roboto;
+            src: url(../fonts/Roboto-Regular.ttf) format('truetype');
+            font-weight: normal;
+}
+@font-face { font-family: Roboto;
+            src: url(../fonts/Roboto-Bold.ttf) format('truetype');
+            font-weight: bold;
+}
+@font-face { font-family: 'Roboto mono';
+            src: url(../fonts/RobotoMono-Medium.ttf) format('truetype');
+            font-weight: 500;
+}
+@font-face { font-family: 'Roboto mono';
+            src: url(../fonts/RobotoMono-Regular.ttf) format('truetype');
+            font-weight: normal;
+}
+@font-face { font-family: 'Roboto mono';
+            src: url(../fonts/RobotoMono-Bold.ttf) format('truetype');
+            font-weight: bold;
+}
+
+.busy{
+    position: fixed;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+    user-select: none;
+}
+.busy:before{
+  content:" ";
+  position:absolute;
+  z-index:9999;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+  background-color:rgba(0,0,0,0.8);
+  transition:opacity 500ms;
+  opacity:0;
+}
+.busy-active:before{
+  opacity:0.5;
+}
+.busy:after{
+  font: normal normal 900 36px/0.5 "Font Awesome 5 Free";
+  color:white;
+  content:"\f2f1";
+  position:absolute;
+  z-index:9999;
+  width:100%;
+  text-align:center;
+  top:50%;
+  animation: a 2s infinite linear;
+}
+
+
+
+.nav-app-selector{
+    transform: rotate(30deg);
+    color: #ecb700;
+}
+
+.badge{
+    color:black;
+    background-color:whitesmoke;
+    padding: 0 5px;
+    border: solid 1px lightgray;
+    border-radius: 10px;
+    min-width: 22px;
+    margin-left: 0.5em;
+
+}
+
+
+.metalic-btn{
+    background: linear-gradient(180deg, white 50%, #dedede 60%, white 100%);
+    text-shadow: 1px 1px 0px white;
+    font-weight: bold;
+    font-size: 1em;
+}
+.metalic-btn:hover{
+    background: linear-gradient(180deg, white 40%, #bebebe 50%, white 100%);
+}
+
+
+.flash-tr{
+    position:absolute;
+    top: 70px;
+    right: 100px;
+    box-shadow: 0px 5px 10px  gray;
+    min-width: 200px;
+}
+
+.lift {
+    box-shadow: 0px 3px 3px darkgray;
+}
+
+.bordered{
+    border: solid 1px lightgray;
+}
+
+.button.has-text-left {
+    justify-content: flex-start;
+
+}
+
+.button.has-text-right {
+    justify-content: flex-end;
+}
+
+
+.table .tr0, .table .tr0 th, .tr0, .tr0 th{
+    padding-top:0px;
+    padding-bottom:0px ;
+    height:0px;
+}
+
+.clickable{
+    cursor: pointer;
+}
+
+.explorer{
+    position: relative;
+    background-color:white;
+    z-index:15;
+}
+
+.is-grouped-inline>*:not(:last-child){
+    margin-right:0.5rem;
+}
+
+
+
+.v2p_char{
+    margin-left:-0.2em;
+}
+
+.level.has-shadow, .tabs.active-has-shadow li.is-active{
+    box-shadow: 0 5px 5px lightgray;
+}
+.level.has-shadow{
+   margin-bottom: 5px;
+}
+
+.tabs .icon:last-child{
+    width:1em;
+}
+
+
+form{
+    margin-bottom: 0px;
+}
+
+
+
+.work-grid{
+    display: grid;
+    height:100%;
+    grid-auto-rows: 100%;
+    grid-template-columns: max-content 1fr max-content;
+}
+.work-grid .dropdown{
+    z-index: 10;
+}
+
+.work-grid-sidebar{
+    padding: 5px;
+    max-width:200px;
+    background-color:lightgray;
+    overflow:auto;
+}
+
+
+.editor-grid{
+    display: grid;
+    height:100%;
+    grid-auto-rows: max-content max-content auto max-content;
+}
+
+.editor-window{
+    overflow:auto;
+    height: 100%;
+    width:100%;
+    font-size:14px;
+    letter-spacing:0.3px;
+}
+
+
+/*--------------[anime] ---------------------*/
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.7s;
+}
+.fade-enter, .fade-leave-to  {
+  opacity: 0;
+}
+
+.trn-enter-active, .trn-leave-active {
+   transition: all 0.5s;
+}
+.trn-enter {
+  transform: translateX(500px);
+}
+
+.trn-leave-to  {
+  /*transform:  scale(0.1);*/
+}
+
+.button{
+    font-weight: 500;
+    letter-spacing:0.5;
+}
