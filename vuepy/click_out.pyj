@@ -1,4 +1,4 @@
-#vim: syntax=python
+#! vim: syntax=python
 
 handleOutsideClick = None
 
