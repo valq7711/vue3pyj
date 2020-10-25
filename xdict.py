@@ -1,5 +1,5 @@
 
-__all__ = [ 'Storage' ]
+__all__ = [ 'XDict' ]
 
 class XDict(dict):
     __slots__ = ()
