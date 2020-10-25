@@ -4,7 +4,10 @@ from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
 
+__static_version__ = '1.0.0'
+
 session = Session()
+
 
 class Logged(Fixture):
     def __init__(self, session):
@@ -74,11 +77,25 @@ def get_fs(w23p_app = None):
         'views':'*',
         'templates':'*',
         'vuepy':'*',
-        'RapydScript':{'src':'*', 'test':'*'},
+        #'RapydScript':{'src':'*', 'test':'*'},
+        'RapydScript':'*',
     }
     app_folder = os.path.join(APPS_FOLDER, w23p_app)
     ret = fs2json.dir_to_fs(app_folder, dir_list, file_mask)
     return ret
+
+@action('create_dir', method = 'POST')
+@session_secured
+def create_dir():
+    w23p_app = request.json.get('w23p_app')
+    dir_path = request.json.get('dir_path')
+    if os.path.isabs(dir_path):
+        dir_path = os.path.relpath(dir_path, '/')
+    dir_path = os.path.join(APPS_FOLDER, w23p_app, dir_path)
+    os.mkdir(dir_path)
+    return dict(new_dir = dir_path)
+
+
 
 @action('write_file', method = 'POST')
 @session_secured

@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 import os, re
 import sys
 import hashlib
-from .storage import Storage
+from .xdict import XDict
+
 
 LOG = None
 CDIR = os.path.dirname(__file__)
@@ -83,8 +83,8 @@ def dir_to_fs(root_d, dir_list = None,file_mask = FILE_MASK_REX):
 
 
 def validate_fdata(fdata, app_folder, must_exist = False):
-    fdata = Storage(fdata)
-    ret = Storage(md5_hash = None, error = '', os_path = None)
+    fdata = XDict(fdata)
+    ret = XDict(md5_hash = None, error = '', os_path = None)
     pth = fdata.path.strip()
     sanitize_pth_re = re.compile(r'\s*(\\|/)*([^\s]*)\s*$')
     pth = sanitize_pth_re.match(pth).groups()[1]
@@ -124,8 +124,3 @@ def del_file(fdata, app_folder):
     ret.msg = 'done'
     return ret
 
-def  main():
-    pass
-
-if __name__ == '__main__':
-    main()
