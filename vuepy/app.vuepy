@@ -1,0 +1,124 @@
+v-def app_templ:
+    div(style = 'position:fixed; top:50px; bottom: 5px; left:5px; right:5px;'):
+        layout(ref = 'layout'):
+            div(style = 'width:100%; padding: 0 10px;'):
+                div(v-if = 'show_explorer',class = 'explorer', style = 'position:absolute;'):
+                    folder_content(v-blurClick = '{exclude: [], handler: "hide_explorer"}'):
+                div(class = 'work-grid'):
+                    #div(class = 'work-grid-sidebar'):
+                    editor(class = 'px-1',:style = "{'grid-column-start': 1, 'grid-column-end': 4}"):
+                    #div(class = 'work-grid-sidebar'):
+
+
+v-pyj:
++++
+async import Vue
+import click_out
+from asset.rs_vue import RS_vue, V_collector
+from asset import common
+
+import components with \
+    confirm, app_selector, login, error,\
+    folder_content, editor, base_layout, modal_b, flash_b, dropdown_b, \
+    nav, navbar_item
+
+from store.root import make as make_store
+
+Vue.directive('blurClick', click_out.opt)
+
+def reg_components():
+    comps = 'modal_b confirm app_selector login error dropdown_b nav navbar_item'.split(/ +/)
+    for c in comps:
+        cname = c.replace(/_/g, '-')
+        if cname is 'nav': cname = 'nav-bar'
+        Vue.component(cname, components[c].make())
+reg_components()
+
+Vue.prototype.$flash = components.flash_b.open
+Vue.prototype.$v_modal = components.modal_b.open
+Vue.prototype.$busy = def(v): (this.$root or this).toggle_busy(v);
+
+
+vc = V_collector()
+class App(RS_vue):
+    def __init__(self, params):
+        store = window.store = make_store(params)
+        super(vc)
+        self.params = params
+        self.store = store
+        self.template = app_templ
+        self.map_store = {
+            push_cmd: 'push_cmd~',
+            try_connect: 'try_connect*',
+            show_explorer: 'show_explorer',
+            w23p_app: 'w23p_app',
+            is_logged: 'is_logged',
+            toggle_explorer: 'toggle_explorer~',
+            search_result:'search_result',
+            is_busy:'is_busy',
+            toggle_busy:'toggle_busy~'
+        }
+        comps = 'folder_content editor base_layout'.split(/ +/)
+        reg_as = {base_layout: 'layout'}
+        self.components = {(reg_as[c] or c):components[c].make() for c in comps }
+
+    def created(self):
+        params = self.$options.params
+        self.v3p_url = params.app_root
+        self.v3p_static = params.app_static
+        self.v3p_busy_el = None
+        self.v3p_busy_tm_id = None
+
+
+    def busy(self, on):
+        if on:
+            if self.v3p_busy_el or self.v3p_busy_tm_id:
+                return
+            def show_busy():
+                el = document.createElement('div')
+                el.className = 'busy'
+                document.body.appendChild(el)
+                setTimeout(def():   el.className += ' busy-active';, 0)
+                self.v3p_busy_el = el
+                self.v3p_busy_tm_id = None
+            self.v3p_busy_tm_id = setTimeout(show_busy, 200)
+        else:
+            if self.v3p_busy_tm_id:
+                clearTimeout(self.v3p_busy_tm_id)
+                self.v3p_busy_tm_id = None
+            elif self.v3p_busy_el:
+                document.body.removeChild(self.v3p_busy_el)
+                self.v3p_busy_el = None
+
+    @vc.watch
+    def is_busy(self, v):
+        self.busy(v)
+
+
+    def hide_explorer(self, e):
+        self.push_cmd(
+            'toggle_explorer',
+            def(): self.toggle_explorer(False);
+            , True
+        )
+
+    @common.asyncer
+    def mounted(self):
+        self.$busy(False)
+        while not self.is_logged:
+            yield self.try_connect()
+        self.$busy(True)
+        yield store.dispatch('w23p_app_list')
+        while not self.w23p_app:
+            app2edit = yield store.dispatch('start_modal', 'app-selector', {app_list: store.get('w23p_app_list')} )
+            if app2edit!='cancel':
+                yield store.dispatch('load_fs_from_srv', app2edit)
+
+
+def start(el, params):
+    app = App(params)
+    window.app = new Vue(app)
+    (window.app).$mount(el or '#app')
+
+---
+

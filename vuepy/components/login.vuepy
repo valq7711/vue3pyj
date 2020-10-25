@@ -1,0 +1,53 @@
+v-def templ_login:
+    modal-b(:can_cancel = 'false', max_width = '300px'):
+        template(v-slot:title):
+            'Login'
+        template(v-slot:body):
+            form(ref = 'frm'):
+                div(class = 'field'):
+                    p(class = 'control has-icons-left'):
+                        input(
+                            name = 'password',
+                            class = 'input',
+                            type = 'password',
+                            placeholder = 'password'
+                        ):
+                        span(class="icon is-small is-left"):
+                            i(class="fas fa-lock"):
+
+        template(v-slot:footer):
+            div(class = 'container buttons is-right'):
+                button(class = 'button is-primary', @click.stop.prevent = 'ok'):'OK'
+
+v-pyj:
++++
+from asset.rs_vue import V_collector,  RS_vue
+from asset.common import asyncer
+
+vc = V_collector()
+class Login(RS_vue):
+    def __init__(self):
+        super(vc)
+        self.template = templ_login
+        self.map_store = {
+            'login' : 'login*',
+            'is_logged':'is_logged',
+            'flash': 'flash~'
+        }
+
+    def ok(self):
+        setTimeout(def(): self.async_ok();, 0)
+
+    @asyncer
+    def async_ok(self):
+        yield self.login(new FormData(self.$refs.frm))
+        if self.is_logged:
+            #self.$modal.close()
+            self.flash('Hi!', 'ok')
+            self.$emit('close')
+        else:
+            self.flash('invalid password', 'error')
+def make():
+    return Login()
+
+---

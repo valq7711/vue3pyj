@@ -1,0 +1,139 @@
+v-def templ:
+    div(class="modal", :class = "{'is-active': is_active}"):
+        div(class="modal-background", @click = "can_cancel$ && close('ui')"):
+        div(class="modal-card", :style = "{'max-height': max_height$, 'max-width': max_width$}"):
+            header(class="modal-card-head"):
+                p(class="modal-card-title"):
+                    slot(name = 'title'):
+                button(v-if = 'can_cancel$', class="delete", aria-label="close", @click.stop = "close('ui')"):
+            section(class="modal-card-body"):
+                slot(name = 'body'):
+            footer(class="modal-card-foot"):
+                slot(name = 'footer'):
+
+
+v-def templ_dialog:
+    modal-b(:can_cancel = 'true', :max_width = 'max_width', :max_height = 'max_height', @close = "$emit('close')"):
+        template(v-slot:title):
+            '{{title}}'
+        template(v-slot:body):
+            div(class = 'media'):
+                div(class = 'media-left', :class = "'has-text-' + status"):
+                    i(:class = "'fa fa-' + icon + ' fa-3x'"):
+                div(class = 'media-content'):
+                    '{{message}}'
+        template(v-slot:footer):
+            div(class = 'container buttons is-right'):
+                button(class = 'button', :class = "'is-' + status", @click.stop.prevent = "$emit('ok')"):'{{ok_text}}'
+                button(v-if = "type == 'confirm'", class = 'button', @click.stop.prevent = "$emit('cancel')"):'{{cancel_text}}'
+
+v-pyj:
++++
+from asset.rs_vue import RS_vue, V_collector
+async import Vue
+
+vc0 = vc = V_collector()
+class Dialog(RS_vue):
+    def __init__(self):
+        super(vc0)
+        self.props = {
+            can_cancel: {type:Boolean, default:True},
+            max_height: {type:String, default:'600px'},
+            max_width: {type:String, default:'300px'},
+            type:  {type:String},
+            ok_text: {type:String, default:'OK'},
+            cancel_text: {type:String, default:'Cancel'},
+
+            title: {type:String, default:'Confirmation'},
+            message: String,
+            icon: {type:String, default:'exclamation-circle'},
+            status: {type:String, default:'warning'},
+        }
+        self.template = templ_dialog
+
+
+vc1 = vc = V_collector()
+class Modal(RS_vue):
+    def __init__(self):
+        super(vc1)
+        self.props = {
+            can_cancel: {type:Boolean, default:True},
+            max_height: String,
+            max_width: String
+        }
+
+        self.template = templ
+
+    def data(self):
+        data =  {
+            is_active: False,
+            can_cancel$:self.can_cancel,
+            max_height$: self.max_height,
+            max_width$: self.max_width
+        }
+        if (open_props = self.$parent.$options.modal_props):
+            props_keys = Object.keys(self.$options.props)
+            for k in Object.keys(open_props):
+                if k in props_keys:
+                    data[k+'$'] = open_props[k]
+        return  data
+
+    @vc.watch
+    def is_active(self, n, o):
+        if not n:
+            p = self.$parent
+            p.$el.parentNode.removeChild(p.$el)
+            p.$destroy()
+
+    def mounted(self):
+        self.is_active = True
+        self.$parent.$modal = self
+
+    def close(self, ui):
+        if ui: # not by code
+            self.$emit('close')
+        self.is_active = False
+
+
+dialog = Vue.extend(Dialog())
+
+def make():
+    return Modal()
+
+def open(parent, opt):
+    propsData = opt.props
+    if (cmp = opt.component):
+        vcmp = Vue.extend(cmp)
+        vm = new vcmp({
+            parent,
+            propsData,
+        })
+        vm.$options.modal_props = opt
+        is_dia = False
+    else:
+        vm = new dialog({
+            parent,
+            propsData,
+        })
+        is_dia = True
+    el = document.body.appendChild(document.createElement('div'))
+    vm.$mount(el)
+
+    if not is_dia:
+        return vm
+
+    res = None
+    p = Promise(def(resolve):
+        nonlocal res
+        res = resolve
+    )
+    for e in ['ok', 'cancel', 'close']:
+        v'const ce = e'
+        vm.$on(ce, def():
+            res(ce is 'close' ? 'cancel' : ce)
+            if ce is not 'close':
+                setTimeout(def(): vm.$modal.close();, 0)
+        )
+    return p
+
+---

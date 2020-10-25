@@ -1,0 +1,44 @@
+# index.js
+
+
+#------------ AMD loader --------------
+from asset import mechanic
+# useful:
+# mechanic.module().keys() -> ['foo', 'bar', 'pack', 'pack.sub_mod' ,  ...]
+# mechanic.module_spec('foo') -> {exports{}, body(), export(prop, get(), set()) }
+# mechanic.module_spec().all() -> {foo: {exports{}, body(), export(prop, get(), set()) }, ...}
+# mechanic.module_spec().defined() -> all().filter by if (body or exports)
+# mechanic.module_spec().undefined() -> all().filter by if not (body or exports)
+
+# ---------- [loader body]--------------
+# collect all async modules from all modules/packages/submodules used in main-module (see below)
+deps = mechanic.module_spec().undefined()
+deps_keys = Object.keys(deps)
+deps_keys_mapped = deps_keys.map(
+    def (mod_name):
+        map = {
+            Vue: 'vue',
+            CodeMirror: 'codemirror/lib/codemirror',
+            axios: "axios.min",
+        }
+        return map[mod_name] or mod_name
+)
+
+# define-call
+define(["amd"].concat(deps_keys_mapped),
+    def(amd,  *args):
+        for i, dep_key in enumerate(deps_keys):
+            # hydrate async modules
+            mechanic.module_spec(dep_key).exports = args[i]
+
+        params = document.getElementsByTagName('meta')[0].dataset
+        window.ENV = {debug:True}
+
+        import load_js
+        load_js.load(amd).then(
+            def():
+                import app
+                app.start('#app', params);
+        ).catch(def(e): raise e;)
+        window.onbeforeunload = def(): return 'hi!';
+) #/define

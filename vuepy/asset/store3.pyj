@@ -1,0 +1,718 @@
+from .rs_getter import RS_getter, make_ref
+
+'''
+# how modules state and computed mounted in the parent
+state_api:
+    state {
+        mod_foo_state:{
+            submod_foo_state:{...}
+            foo_propA:...,
+            foo_propB:...,
+        },
+        mod_bar_state:{...}
+    }
+
+    computed:{
+        # `self` holds own getters
+        self: {
+            getterA
+            getterB
+        }
+        # submodules getters
+        mod_foo_computed:{
+            submod_foo_computed:{self:{...}, ...}
+            foo_getterA:...,
+            foo_getterB:...,
+        },
+        mod_bar_computed:{...},
+    }
+'''
+
+# need to decouple prototype from base class `RS_getter`
+# so we can safe change Getter.prototype or Getter.<static> without impact on `RS_getter`
+class Getter(RS_getter):
+    pass
+
+
+def print_log(*args):
+    if window.ENV and window.ENV.debug:
+        console.log.apply(console, arguments)
+
+def to_hash(v):
+    if Array.isArray(v):
+        ret = {}
+        v.forEach(def(it): ret[it] = it;)
+    else:
+        ret = v
+    return ret
+
+
+
+def make_prop_chain(path, splitter, prefix):
+    prefix = prefix or ''
+    if not Array.isArray(path):
+        splitter = splitter or '.'
+        path = path.split(splitter).filter(def(v): return v;)
+    return path.reduce(def(p,v): return p + prefix + '.' +  v;, '')
+
+
+def check_path(obj, path, return_prop):
+    if not Array.isArray(path):
+        path = path.split('.')
+    if path.length == 1:
+        p = path[0]
+        ret = obj.hasOwnProperty(p)
+        if ret and return_prop:
+            ret = obj[p]
+        return ret
+    try:
+        last_prnt = make_prop_getter(path[:-1].join('.'))(obj)
+    except TypeError:
+        return False
+    ret = last_prnt and last_prnt.hasOwnProperty(path[-1])
+    if ret and return_prop:
+        ret = last_prnt[path[-1]]
+    return ret
+
+def make_prop_getter(prop_chain):
+    if prop_chain:
+        sym0 = prop_chain[0]
+        # autofix missed dot
+        if sym0 != '.' and sym0 != '[':
+            prop_chain = '.' + prop_chain
+    me = make_prop_getter
+    if not (ret = me._memo[prop_chain]):
+        ret = me._memo[prop_chain] = Function('obj', '{return obj' + prop_chain + '}')
+    return ret
+make_prop_getter._memo = {}
+
+
+def split_modgetter_rest(path):
+    '''
+    "foo.some"  - module prop path
+    "./foo/bar.baz" - relative path
+    "/foo/bar.baz" - root path
+    "$/foo/bar.baz" - also root path
+    "$.bar" - root prop
+    '''
+    if path[0] == '$':
+        if path[1] == '.': # '$.'
+            return [def(mod): return mod.root or mod;, path[2:]]
+        elif path[1] == '/': # '$/'
+            path = path[1:]
+
+    mod_rest = /(^\.?(\/[\w$]+)+)((\.[^.]+)+)$/.exec(path)
+    if not mod_rest:
+        return [def(mod): return mod;, path]
+    else:
+        mod_path = mod_rest[1]
+        if mod_path[0] is '.':
+            is_relative = True
+            mod_path = mod_path[2:]
+        else:
+            is_relative = False
+            mod_path = mod_path[1:]
+        modgetter = make_prop_getter('.modules' + make_prop_chain(mod_path, '/') + '.self')
+        if not is_relative:
+            _modgetter = modgetter
+            modgetter = def(mod): return _modgetter(mod.root or mod);
+    return [modgetter, mod_rest[3][1:]]
+
+
+# ---------------------- RS_store -------------------
+class RS_store:
+
+    def mount(self, istate, vtriggers_node, computed_node, path):
+        if not self.is_root:
+            make_ref(self.root, {'_vm':'_vm'}, self)
+
+        self._path = path
+        self._istate = istate
+        self._vtriggers = vtriggers_node
+        self.computed = computed_node
+        istate.set(self._init_state)
+        del self._init_state
+        if self.map_getters:
+            map_getters = self.map_getters
+            for k in map_getters:
+                g = self.getter_factory(map_getters[k])
+                opt = {
+                    enumerable: True,
+                    configurable:True,
+                    get: g.get,
+                    set: g.set
+                }
+                Object.defineProperty(self.computed.self, k, opt)
+
+        if (raw_getters = self._raw_getters):
+            for name in raw_getters:
+                self._mounted_getters[name] = self.mount_getter(name, raw_getters[name])
+
+        self.__mount_helpers__() # $bus, $on, $off ... etc
+
+    def __init__(self, state, vc, processor):
+        self.is_root = !!processor.root
+        if self.is_root and not self.vue:
+            raise ReferenceError('You should first call Vue.use(Your_Store)')
+
+        self._unwatchers = []
+
+        self._init_state = state.call ? state() : state # will be deleted after mount
+        self.processor = processor
+
+        self._path = None   # array-path to state of module
+        self.root = None
+        self.modules = {} # !!! must be object to build a modules chain
+
+        self._vm = None
+        self._istate = None   # {get, set} - get/set module state
+        self._vtriggers = None # node in _vm.data for mount module getters-triggers
+        self._last_sp_id = 0
+
+        self._mutations = vc._mutations
+        self._actions = vc._actions
+        self._raw_getters = vc._getters
+        self._mounted_getters = {}
+        self._2way_getters = {}
+
+        # self.computed - storage of cached-computed getter values
+        # self.computed.foo - returns foo-submodule computed that is like {bar_submod:{...}, baz_submod:{...}, self:{...}}
+        # self.computed.self - returns own getters
+        self.computed = None
+        self.map_getters = processor.map_getters # {'user_id':'/user.id'}  - map state/getters from other modules, this is how modules interact
+
+        # ---------- bindings -----------------
+        self.dispatch = self.dispatch.bind(self)
+        self.commit   = self.commit.bind(self)
+
+
+        # ---------- inject store methods -----------------
+        self.processor.commit = self.commit
+        self.processor.dispatch = self.dispatch
+        self.processor.get = self.get.bind(self)
+        self.processor._get = self._get.bind(self)
+        self.processor.$set = self.$set.bind(self)
+        self.processor.$del = self.$del.bind(self)
+        make_ref(self, [
+            'state', '$state',
+            '$bus', '$on', '$off', '$emit',
+            '$watch'],
+        self.processor)
+
+        # ---------- root init -----------------
+        if self.is_root:
+            self.__handlers_memo__ = {}
+            vopt = {}
+            vopt.data = {
+                state: None,
+                triggers:{self:{}},
+                rspace:{}
+            }
+            vm = self._vm = new self.vue(vopt)
+            istate = {
+                get: def(): return vm.state;
+                , set: def(v): vm.state = v;
+            }
+            vtriggers = vm.triggers
+            computed = {'self':{}}
+            Getter.__set_vm__(self._vm)
+            #self.created()
+            self.mount(istate, vtriggers, computed, [])
+            if self.processor.modules:
+                self.mount_modules(self.processor.modules)
+            if self.processor._mounted:
+                self.processor._mounted()
+        else:
+            pass
+        #self.created()
+
+    def mount_getter(self, name, user_getter):
+        vtriggers_self = self._vtriggers.self
+
+        if isinstance(user_getter, Function):
+            raw_getter = user_getter
+        else: # assume user_getter = {get: ..., set: ...}
+            raw_getter = user_getter.get
+            raw_setter = user_getter.set
+
+        def wrapped_getter():
+            return raw_getter.call(self.processor,
+                                  self.state, self.computed,
+                                  self.$state, self.$computed)
+
+        getter = Getter(name, wrapped_getter, vtriggers_self).mount()
+        opt = {
+            enumerable: True,
+            configurable:True,
+            get: getter.get.bind(getter),
+            set: def():
+                raise Error(f"Getter '${name}' isn't 2way")
+        }
+        if raw_setter:
+            opt.set = def(v):
+                raw_setter.call(self.processor, v,
+                                self.state, self.computed,
+                                self.$state, self.$computed)
+                self._2way_getters[name] = True
+        Object.defineProperty(self.computed.self, name, opt)
+        return getter
+
+    def $del(self):
+        self._vm.$delete.apply(self._vm, arguments)
+
+    def $set(self):
+        return self._vm.$set.apply(self._vm, arguments)
+
+    def check_spath(self, path, return_prop):
+        return check_path(self.state, path, return_prop)
+
+    def check_gpath(self, path, return_prop):
+        return check_path(self.computed.self, path, return_prop)
+
+    get state(self):
+        return self._istate.get()
+
+    get $state(self):
+        return (self.root or self)._istate.get()
+
+    get $computed(self):
+        return (self.root or self).computed
+
+    def _$get(self, path):
+        return  make_prop_getter(path)(self.state)
+
+    def $get(self, path):
+        '''
+        returns getter-value or state
+        looks for getter first
+        '''
+        if (c = self.computed.self).hasOwnProperty(path):
+            return c[path]
+        else:
+            return self._$get(path)
+
+
+
+    get $vm(self):
+        return self._vm
+
+    def mount_modules(self, modules):
+        for k in modules:
+            m = modules[k]
+            self.mount_module(m.Store and (new m.Store(self.root or self)) or m, k)
+
+    def mount_module(self, mod_obj, path, mod_name):
+        path = path or ''
+        if path:
+            path_arr = path.split('.')
+            if path_arr.length ==1:
+                path = ''
+                as_name = path_arr[0]
+            else:
+                as_name = path_arr[-1]
+                path = path_arr[:-1].join('.')
+        #state_api = self.state_api
+        as_name = as_name or mod_obj.__name__ or mod_obj.constructor and mod_obj.constructor.name
+        if not ( as_name and type(as_name).startsWith('Str') ):
+            raise Error('can`t get the name of module: ' + mod_obj)
+        if path and not (path_node = self.check_spath(path, True)):
+            raise Error('can`t mount module under path `' + path + '`, it doesn`t exist')
+        path_node =  path_node or self.state
+
+        self.$set(path_node, as_name, None)
+        rpath_node = self._path.concat(path_arr ? path_arr[:-1] : []) # full path to parent
+        parent_node_getter = make_prop_getter(make_prop_chain(rpath_node))
+        istate = {
+              get: def(): return parent_node_getter(self.$state)[as_name];
+            , set: def(v): parent_node_getter(self.$state)[as_name] = v;
+            , $parent_node: def(): return parent_node_getter(self.$state);
+            , $self_name: as_name
+        }
+        vtriggers = self._vtriggers
+        mod_name = mod_name or as_name
+        if vtriggers.hasOwnProperty(mod_name):
+            raise Error('can`t mount module to _vtriggers under name `' + mod_name + '`,  name already exists')
+        self.$set(vtriggers, mod_name, {self:{}})
+        self.$set(self.computed, mod_name, {self:{}})
+        mod_obj._path = rpath_node.concat(as_name)
+        mod_obj.root = self.root or self
+        mod_obj.mount(istate, vtriggers[mod_name], self.computed[mod_name], mod_obj._path)
+        if mod_obj.processor.modules:
+            mod_obj.mount_modules(mod_obj.processor.modules)
+        self.modules[mod_name] = Object.assign({self: mod_obj}, mod_obj.modules)
+        if (inject = to_hash(mod_obj.processor.inject)):
+            provide = self.processor.provide
+            props = {}
+            for p in inject:
+                v'const to_ = p'
+                v'const from_ = inject[to_]'
+                props[to_] = {
+                    enumerable: False,
+                    configurable: True,
+                    get: def():
+                        return provide[from_];
+                }
+            Object.defineProperties(mod_obj.processor, props)
+        if mod_obj.processor._mounted:
+            mod_obj.processor._mounted()
+
+    def _get(self, path):
+        '''
+        looks for pure state only
+        getters are ignored
+        '''
+        mod, rest = split_modgetter_rest(path)
+        return mod(self)._$get(rest)
+
+    def get(self, path):
+        '''
+        returns getter-value or state
+        looks for getter first
+        '''
+        mod, rest = split_modgetter_rest(path)
+        return mod(self).$get(rest)
+
+    def getter_factory(self, path):
+        rpath = self.get_rpath(path)
+        rmod = self.root or self
+        if not (h = rmod.__handlers_memo__[rpath]):
+            h = rmod.__handlers_memo__[rpath] = rmod._getter_factory(rpath)
+        return h
+
+    def _getter_factory(self, rpath):
+        '''
+        also accepts (modgetter, rest) as args
+        '''
+        if self.root:
+            raise Error('this function is for staff only')
+
+        argtype = type(rpath)
+        if argtype[0] is 'S': # String - regular call as  f(path)
+            modgetter, rest =  split_modgetter_rest(rpath)
+        elif argtype[0] is 'F': # Function - call as f(modgetter, rest)
+            modgetter = arguments[0]
+            rest = arguments[1]
+        else:
+            raise Error('Wrong args: ', arguments)
+        _getter = make_prop_getter(rest)
+
+        def getter(): # (self, modgetter, rest, _getter)
+            mod = modgetter(self)
+            if (c = mod.computed.self).hasOwnProperty(rest):
+                return  c[rest]
+            else:
+                return _getter(mod.state);
+
+        def setter(v): # (self, modgetter, rest)
+            mod = modgetter(self)
+            c = mod.computed.self
+            if (desc = Object.getOwnPropertyDescriptor(c, rest)):
+                if desc.set:
+                    c[rest] = v
+                else:
+                    raise Error(f"Getter '${rpath}' isn't 2way")
+            else:
+                raise Error(f"Getter '${rpath}' doesn't exist")
+
+        getter.get = getter
+        getter.set = setter
+        getter.get_set = {
+            get: getter,
+            set: setter
+        }
+        return getter
+
+    def get_rpath(self, path_str):
+        is_root = self.is_root
+        path = path_str or ''
+        if path[0] in ['/', '$']:
+            return path
+        elif path[0] is '.': #  path starts from ./ - relative
+            if is_root:
+                return path[1:]
+            # relative
+            path = path[1:]
+        elif path: # regular prop
+            if is_root:
+                return path
+            path = '.' + path
+        return '/' + (self._path or []).join('/') + path
+
+    def handler_factory(self, path):
+        rpath = self.get_rpath(path)
+        rmod = self.root or self
+        if not (h = rmod.__handlers_memo__[rpath]):
+            h = rmod.__handlers_memo__[rpath] = rmod._handler_factory(rpath)
+        return h
+
+    def _handler_factory(self, rpath):
+        if self.root:
+            raise Error('this function is for staff only')
+        modgetter, rest =  split_modgetter_rest(rpath)
+        if rest.endsWith('~'):
+            mutation = rest[:-1]
+            return def(*args): modgetter(self)._commit(mutation, *args);
+        elif rest.endsWith('='): # generic mutation
+            return def(*args): return modgetter(self)._commit(rest, *args);
+        elif rest.endsWith('*'):
+            action = rest[:-1]
+            return def(*args): return modgetter(self)._dispatch(action, *args);
+        else:
+            return self._getter_factory(modgetter, rest)
+
+    def _commit(self, mutation, *payload):
+        print_log('mutation: ', mutation)
+        print_log('\tpayload: ',  payload)
+        if (h = self._mutations[mutation]):
+            return h.apply(self.processor, payload)
+        elif mutation[-1] is '=': # simple assignment by path
+            path_arr = mutation[:-1].split('.')
+            if path_arr.length == 1:
+                if self._2way_getters[path_arr[0]]:
+                    self.computed.self[path_arr[0]] = payload[0]
+                    return payload[0]
+                else:
+                    parent = self.state
+                child = path_arr[0]
+                #return self.$set(self.state, path_arr[0], payload[0])
+            elif (parent = self.check_spath(path_arr[:-1], True)):
+                child = path_arr[0]
+            if parent:
+                return self.$set(parent, child, payload[0])
+        raise Error('unknown mutation: ' + mutation)
+
+    def commit(self, mutation, *payload):
+        modgetter, mutation =  split_modgetter_rest(mutation)
+        return modgetter(self)._commit(mutation, *payload)
+
+    def _dispatch(self, action, *payload):
+        print_log('action: ', action)
+        print_log('\tpayload: ',  payload)
+        if not (self._actions and ($action = self._actions[action])):
+            raise Error('unknown action: ' + action)
+        p = $action.apply(self.processor, payload)
+        if not isinstance(p, Promise):
+            p = Promise.resolve(p)
+        return p
+
+    def dispatch(self, action, *payload):
+        modgetter, action =  split_modgetter_rest(action)
+        mod = modgetter(self)
+        return mod._dispatch(action, *payload)
+
+    #  ------------ register mutation/action at runtime -------------------
+    def set_mutation(self, h, as_name):
+        as_name = as_name or h.__name__ or h.name
+        if not (as_name and type(as_name).startsWith('Str') ):
+            raise Error('can`t get the name of new mutation: ' + h)
+        if as_name in self._mutations:
+            pass
+        elif self.hasOwnProperty(as_name):
+            raise Error('Bad mutation name: ' + as_name)
+        self._mutations[as_name] = self[as_name] = h
+
+
+    def set_action(self, h, as_name):
+        as_name = as_name or h.__name__ or h.name
+        if not (as_name and type(as_name).startsWith('Str') ):
+            raise Error('can`t get the name of new action: ' + h)
+        if as_name in self._actions:
+            pass
+        elif self.hasOwnProperty(as_name):
+            raise Error('Bad action name: ' + as_name)
+        self._actions[as_name] = self[as_name] = h
+
+    def __mount_helpers__(self):
+
+        if self.is_root:
+            self.$watch = def(*args):
+                off = self._vm.$watch(*args)
+                self._unwatchers.push(off)
+                return off
+
+            self.$bus = {
+                $on: def(e, cb):
+                    self._vm.$on(e, cb)
+                    return def(): self.$bus.$off(e, cb);
+
+                $off: def(e, cb):
+                    self._vm.$off(e, cb)
+
+                $emit: def():
+                    self._vm.$emit.apply(self._vm, arguments)
+            }
+        else: # copy from root
+            for k in ['$watch', '$bus']:
+                self[k] = self.root[k]
+
+        for k in self.$bus:
+            self[k] = self.$bus[k] # bound to root
+
+
+    # ------------- install --------------------
+
+    @staticmethod
+    def _map_opt($store, $map_opts, $opts, copy_opt):
+        is_mutation_re  =  /(.+)(~|=)$/
+        is_action_re  =  /(.+)\*$/
+        #$opts = {methods:{}, computed:{}}
+
+        if not $map_opts:
+            return
+
+        injectors = {
+            '*': (def(f): return def(): f.call(this, $store.dispatch, *arguments);),
+            '~': (def(f): return def(): f.call(this, $store.commit, *arguments);)
+        }
+
+        if Array.isArray($map_opts):
+            $map_opts = { k:k for k in $map_opts}
+
+        if copy_opt:
+            for opt in ['methods', 'computed']:
+                $opts[opt] = Object.assign({}, $opts[opt])
+
+        for map_to in $map_opts:
+            map_from = $map_opts[map_to]
+            if map_from in ['*','~']:
+                if not $opts.methods[map_to]:
+                    raise ReferenceError('Can`t map ' + map_from +' to non-existing method: ' + map_to)
+                $opts.methods[map_to] = injectors[map_from]($opts.methods[map_to])
+            elif type(map_from).startsWith('Fun') and (map_to_split = /(.+?)(\*|~)$/.exec(map_to)):
+                map_to_meth = map_to_split[1]
+                store_meth = map_to_split[2]
+                $opts.methods[map_to_meth] = injectors[store_meth](map_from)
+            else:
+                modgetter, rest = split_modgetter_rest(map_from)
+                store_mod = modgetter($store)
+                if rest is '$bus':
+                    $opts['computed'][map_to] = def(): return modgetter($store).$bus;
+                    continue
+                handler = $store.handler_factory(map_from)
+                if (action = is_action_re.exec(rest)):
+                    action = action[1]
+                    if not (store_mod._actions and action in store_mod._actions):
+                        raise ReferenceError('unknown action in `map_store`: ' + map_from)
+                    if $opts['methods'][map_to]:
+                        $opts['methods'][map_to] = \
+                            (def(h, store_h):
+                                 return def():
+                                    return h.call(this, store_h, *arguments)
+                            )($opts['methods'][map_to], handler)
+                    else:
+                        $opts['methods'][map_to] = handler
+
+                elif (mutation = is_mutation_re.exec(rest)):
+                    if mutation[2] is '=':
+                        if not store_mod.check_spath(mutation[1]):
+                            raise ReferenceError('unknown mutation in `map_store`: ' + map_from)
+                    else:
+                        mutation = mutation[1]
+                        if not (mutation in store_mod._mutations):
+                            raise ReferenceError('unknown mutation in `map_store`: ' + map_from)
+                    if $opts['methods'][map_to]:
+                        $opts['methods'][map_to] = \
+                            (def(h, store_h):
+                                 return def():
+                                     return h.call(this, store_h, *arguments);
+                            )($opts['methods'][map_to], handler)
+                    else:
+                        $opts['methods'][map_to] = handler
+                elif rest[-1] is '=':
+                    rest = rest[:-1]
+                    if store_mod.check_spath(rest):
+                        $opts['methods'][map_to] = handler.get_set
+                elif store_mod.check_gpath(rest) or store_mod.check_spath(rest):
+                    $opts['computed'][map_to] = handler.get_set
+                else:
+                    raise ReferenceError('Can`t map `' + map_from + '` to `' + map_to +  '`')
+
+
+
+
+    @staticmethod
+    def before_create():
+        map_store = 'map_store'
+        is_mutation_re  =  /(.+)(~|=)$/
+        is_action_re  =  /(.+)\*$/
+
+        $opts = this.$options
+        #!don't replace with map_store in ...
+        $map_opts = $opts[map_store] or $opts.propsData and $opts.propsData[map_store]
+        store =  $opts.store or $opts.parent and $opts.parent.$store
+        if store:
+            this.$store = store
+
+        if not $map_opts:
+            return
+        if not store:
+            raise Error('Store is not found')
+        RS_store._map_opt(store, $map_opts, $opts, True)
+
+    @staticmethod
+    def beforeDestroy():
+        self = this # vue-component
+        if self.bus_cleanup and self.bus_cleanup.length:
+            print_log('bus_cleanup', self.bus_cleanup)
+            self.bus_cleanup.forEach(def(off): off();)
+
+    @staticmethod
+    def install(Vue, opt):
+        RS_store.prototype.vue = Vue
+        Vue.mixin({
+            beforeCreate: RS_store.before_create,
+            beforeDestroy: RS_store.beforeDestroy
+        })
+
+    #  ---------------- API for store reactive data, used by rs_vobj ----------------
+    def $get_space(self, data, id):
+        root = self.root or self
+        vm = root._vm
+        if not id:
+            root._last_sp_id += 1
+            id = '_#' + root._last_sp_id
+            if vm.rspace.hasOwnProperty(id):
+                raise Error(f'autogenerated id = ${id} already exists!')
+        vm.$set(vm.rspace, id, {data: data or {}, triggers:{}})
+        node = vm.rspace[id]
+        return {data : node.data, triggers: node.triggers, id: id}
+
+
+    def $free_space(self, id):
+        vm = self._vm
+        vm.$delete(vm.rspace, id)
+
+
+
+    # -------------- $destroy -----------------
+    def $unwatch_all(self):
+        mgetters = self._mounted_getters
+        if not mgetters: # already unwatched
+            return
+        for name in (self.modules or []):
+            self.modules[name].self.$unwatch_all()
+        Object.keys(mgetters).forEach(def(k): mgetters[k].unmount();)
+        del self._mounted_getters
+        for off in self._unwatchers:
+            off()
+        del self._unwatchers
+
+
+    def $destroy(self):
+        self.$unwatch_all()
+        for name in (self.modules or []):
+            self.modules[name].self.$destroy()
+            self.$del(self._vtriggers, name)
+            del self.modules[name]
+        self.$del(self._vtriggers, 'self')
+        del self._vtriggers
+        if not self.is_root:
+            node = self._istate.$parent_node()
+            name = self._istate.$self_name
+            self.$del(node, name)
+        else:
+            self._vm.$destroy
+
+        del self.computed
+
+

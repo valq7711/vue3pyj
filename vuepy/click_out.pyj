@@ -1,0 +1,25 @@
+handleOutsideClick = None
+
+opt = {
+    def bind(self, el, binding, vnode):
+        nonlocal handleOutsideClick
+        handleOutsideClick = def(e):
+            #e.stopPropagation()
+            handler = binding.value.handler
+            exclude = binding.value.exclude
+            clickedOnExcludedEl = False
+            for v'var i=0;i++;i<exclude.length':
+                refName = exclude[i]
+                excludedEl = vnode.context.$refs[refName]
+                if (clickedOnExcludedEl = excludedEl.contains(e.target)):
+                    break
+            if not (el.contains(e.target) or clickedOnExcludedEl):
+                vnode.context[handler]()
+
+        document.addEventListener('click', handleOutsideClick)
+        document.addEventListener('touchstart', handleOutsideClick)
+
+    def unbind(self):
+        document.removeEventListener('click', handleOutsideClick)
+        document.removeEventListener('touchstart', handleOutsideClick)
+}

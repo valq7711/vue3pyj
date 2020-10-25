@@ -1,0 +1,123 @@
+from .rs_getter import RS_getter, make_ref
+
+class Getter(RS_getter):
+    pass
+
+
+class RS_vobj:
+    @staticmethod
+    def __init_class__(store):
+        # this == class
+        this.prototype.$store = store
+        this.prototype._vm = store.$vm
+        Getter.__set_vm__(store.$vm)
+
+    def __init__(self, $opt, vc):
+        '''
+        $opt : {map_store, _self, data}
+        self.
+            $opt
+            _vnode
+            _unwatchers
+            _vm *
+            $store *
+            $ref
+            $set
+            $mount_getter()
+            $destroy()
+            _map_store()
+        '''
+
+        self.$opt = $opt
+        if $opt._self:
+            Object.assign(self, $opt._self)
+        self._vnode = self.$store.$get_space(self.$opt.data, self._id) # return reactive {data:{}, triggers:{}, id:...}
+        data = self._vnode.data
+        binder = def(p):
+            return {
+                configurable: True,
+                enumerable: True,
+                get: def(): return data[p];
+                , set: def(v): data[p] = v;
+            }
+        for name in (data or []):
+            Object.defineProperty(self, name, binder(name))
+
+        self._getters = {}
+        raw_getters = vc._getters
+        if raw_getters:
+            for name in raw_getters:
+                self._getters[name] = self.$mount_getter(name, raw_getters[name])
+
+        self._unwatchers = {}
+        vm = self._vm
+        watchers = vc._$watch or []
+        for name in watchers:
+            wopt = watchers[name]
+            self._unwatchers[name] =  vm.$watch(wopt.watch_for.bind(self), wopt.handler.bind(self))
+
+        if not self.__proto__.__injected:
+            self._map_store()
+            self.__proto__.__injected = True
+
+    def $set(self, obj, p, v):
+        return self._vm.$set(obj, p, v)
+
+    def $ref(self, *args):
+        return make_ref(self, args)
+
+    def $mount_getter(self, name, user_getter):
+        vm = self._vm
+        vtriggers = self._vnode.triggers
+        if Object.hasOwnProperty(vtriggers, name):
+            raise Error(f"getter '${name}' already mounted")
+
+        if not isinstance(user_getter, Function):
+            raw_getter = user_getter.get
+            raw_setter = user_getter.set
+        else:
+            raw_getter = user_getter
+
+        getter = Getter(name, raw_getter.bind(self), vtriggers).mount()
+        opt = {
+            enumerable: True,
+            configurable:True,
+            get: getter.get.bind(getter)
+        }
+        if raw_setter:
+            opt.set = raw_setter.bind(self)
+        Object.defineProperty(self, name, opt)
+        return getter
+
+    def _map_store(self):
+        is_mutation_re  =  /(.+)~$/
+        is_action_re  =  /(.+)\*$/
+
+        #!don't replace with map_store in ...
+        if not ($map_opts = self.$opt['map_store']):
+            return
+        if not ($store = self.$store):
+            raise Error('Store is not found')
+
+        $opts = {methods: self.__proto__, computed:{}}
+        $store.constructor._map_opt($store, $map_opts, $opts)
+        computed = $opts.computed
+        for cmp in computed:
+            get_set = computed[cmp]
+            opt = {
+                configurable: True,
+                enumerable: True,
+                get: get_set.get,
+                set: get_set.set
+            }
+            Object.defineProperty(self.__proto__, cmp ,opt)
+
+    def $destroy(self):
+        for k in (self._unwatchers or []):
+            self._unwatchers(k)()
+        for g in (self._getters or []):
+            self._getters[g].unmount()
+        self.$store.$free_space(self._vnode.id)
+        del self._getters
+        del self._vnode
+

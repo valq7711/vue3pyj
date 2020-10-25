@@ -1,0 +1,53 @@
+
+class API:
+    def __init__(self, axios, baseURL, bus, login):
+        self.login = login
+        self.bus = bus
+        self.baseURL = baseURL
+        self.srv = axios.create({
+              baseURL: baseURL,
+              timeout: 60000,
+              withCredentials: True
+            })
+        self.last_resp =''
+        self.last_error =''
+
+    def call(self, meth, f, args, vars):
+        args = args or []
+        if meth is 'get':
+            if Array.isArray(args):
+                args.unshift(f)
+                f = args.join('/')
+                args = undefined
+                if vars and not vars.params:
+                    vars = {params: vars}
+            elif not args.params:
+                args = {params: args}
+
+        ret =  self.srv[meth]( f, args)
+        .then(def(r):
+                  self.done(r)
+                  return r;
+              , def(r): return self.raise_error(r, {meth, f, args} );)
+        return ret
+
+    def get(self, f, args):
+        return self.call('get', f, args)
+
+    def post(self, f, args):
+        return self.call('post', f, args)
+
+    def done(self, resp):
+        self.last_resp = resp
+        if self.bus:
+            self.bus.$emit('server', {event: 'done', emitter: self, data: resp.data })
+
+    def raise_error(self, err, opt):
+        if err.response.status == 403 and self.login: # forbidden - try login
+            return self.login()
+            .then(def(): return self.srv[opt.meth](opt.f, opt.args);)
+        self.last_error = err
+        if self.bus:
+            self.bus.$emit('server', {event: 'error', emitter: self, data: err})
+        return Promise.reject(err)
+

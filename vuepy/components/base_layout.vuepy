@@ -1,0 +1,122 @@
+v-def templ:
+    def T(%tag = 'template'):
+    div(data-vc = 'layout'):
+        top-menu(:menus= 'menus',
+                 @click_item= 'menu_click.apply(this, arguments)'):
+            T(v-slot:search):
+                navbar-item(:dropdown = 'true', :arrowless = 'true', :use_activator = 'true', :panel = 'true'):
+                    T(v-slot:label = "{activator}"):
+                        div(class='field has-addons'):
+                            p(class = 'control'):
+                                input(
+                                    ref = 'search',
+                                    class = 'input',
+                                    type = 'text',
+                                    placeholder="Global search",
+                                    @keyup.enter = 'search(activator)'
+                                ):
+                            p(class = 'control'):
+                                button(class = 'button is-info', @click.stop = 'search(activator)'):
+                                    i(class='fa fa-search'):
+                    T(v-slot:default = "{activator}"):
+                        search-view(:activator = 'activator'):
+            T(v-slot:flash = "{side}"):
+                navbar-item(ref = 'flash', :dropdown = 'true', :hoverable = 'true', :side = "side"):
+                    T(v-slot:label):
+                        i(class='fa fa-bullhorn fa-flip-horizontal'):
+                    navbar-item(class = 'px-3'):
+                        div(class  = 'notification py-1', :class = "'is-'+flash_status"):
+                            T(v-if = 'flash.component'):
+                                component(:is = 'flash.component', v-bind = 'flash.cargs'):
+                            T(v-else):
+                                '{{flash.msg}}'
+        main:
+            slot:
+
+v-def modal_demo:
+    modal-b:
+        template(v-slot:title):
+            'title'
+        template(v-slot:body):
+            'body'
+        template(v-slot:footer):
+            button(class ='button',  @click = "$emit('ok')"): 'ok'
+            button(class ='button',  @click = "$emit('cancel')"): 'cancel'
+
+
+v-pyj:
++++
+from asset.rs_vue import V_collector, RS_vue
+from components import menu_b as menu, modal_b, search_view
+
+vc = V_collector()
+class Layout(RS_vue):
+    def __init__(self):
+        super(vc)
+        self.template = templ
+        self.components = {
+            'top-menu': menu.make(),
+            'search-view': search_view.make()
+        }
+        self.map_store = {
+            flash: 'flash',
+            is_busy:  'is_busy',
+            menus: 'menus',
+            menu_click: 'menu_click*',
+            modal_state: 'modal_state',
+            close_modal: 'close_modal*',
+            set_search: 'search=',
+            search_result:'search_result',
+            search_filters:'search_filters',
+        }
+        self.modal = None
+
+    def search(self, activator):
+        v = self.$refs.search.value
+        self.set_search(v)
+        activator.set(True)
+
+
+    @vc.computed
+    def flash_status(self):
+        map_status = {ok: 'success', err: 'danger', error: 'danger', warn: 'warning'}
+        return map_status[self.flash.status]
+
+    @vc.watch('flash.trigger')
+    def flash_watcher(self):
+        #self.flash_active = True
+        opt = {
+            duration: 2000,
+            message: self.flash.msg,
+            status: self.flash_status,
+            component: self.flash.component,
+            props: self.flash.cargs,
+            basket: self.$refs.flash
+        }
+        self.$flash(opt)
+
+    @vc.watch('modal_state.is_active')
+    def modal_handler(self, v, n):
+        if v:
+            modal_state = self.modal_state
+            component = modal_state.inner_component
+            if component in ['confirm', 'dialog']:
+                props = Object.assign({type: component},  self.modal_state.inner_args)
+                modal_b.open(self, { props }).then(def(*args): self.close_modal(*args);)
+            else:
+                if type(component) is 'String':
+                    component = self.constructor.component(component)
+                self.modal = modal_b.open(self, {
+                    props: self.modal_state.inner_args,
+                    component: component,
+                    can_cancel: modal_state.cancelable,
+                })
+                self.modal.$on('close', def(*args): self.close_modal(*args);)
+        else:
+            if self.modal and self.modal.$modal.is_active:
+                self.modal.$modal.close()
+            self.modal = None
+
+def  make():
+    return Layout()
+---

@@ -1,0 +1,198 @@
+from asset.rs_vue import V_collector
+from asset.store3 import RS_store
+from asset.common import asyncer
+import asset.common as common
+
+DEFSTATE = {
+    fields: [
+        {name: 'name', label: 'Name', width: '250px'},
+        {name: 'type', label: 'Type', width: '60px'},
+        {name: 'mtime', label: 'Last Changed', width: '200px',
+             formatter: def(d): return d ? (new Date(d)).toLocaleString() : '';}
+    ],
+    dir_id : 0,
+    selected : {},
+    save_as : None,
+    type_field : 'type',
+    sort_by : 'name',
+    toggle_refresh: False,
+    basket: [],
+}
+
+def catch_error(f):
+    def inner(*args):
+        self = this # must be store instance
+        try:
+            ret = f.apply(self, args)
+        except as err:
+            self.flash(err.toString(), 'error')
+            return
+        if isinstance(ret, Promise):
+            ret.catch(def(err):
+                self.flash(err.toString(), 'error')
+            )
+        return ret
+    inner.__name__ = f.__name__ or f.name
+    return inner
+
+vc = V_collector()
+class Explorer:
+    def __init__(self):
+        self.inject = {
+            api: 'api',
+            start_modal: '$start_modal',
+            flash:'$flash'
+        }
+        self.map_getters = {
+            get_fs: '$.get_fs'
+        }
+
+    @vc.mutation
+    def save_as(self, save_as):
+        self.state.save_as = save_as
+
+    @vc.mutation
+    def set_basket(self, basket):
+        self.state.basket = basket
+
+    @vc.mutation
+    def set_dir(self, dir_id):
+        self.state.dir_id = dir_id
+        self.commit('clear_selected')
+
+    @vc.getter
+    def path_arr(self, st, c):
+        fs = c.self.get_fs()
+        ret = fs.path_by_id(st.dir_id).infos
+        ret[0].name = 'root'
+        return ret
+
+    @vc.mutation
+    def toggle_select(self, rid):
+        selected = self.state.selected
+        self.$set(selected, rid, not selected[rid])
+        if not selected[rid]:
+            self.$del(selected, rid)
+
+
+    @vc.mutation
+    def clear_selected(self):
+        self.state.selected = {}
+
+    @vc.mutation
+    def fix_basket(self):
+        #remove deleted files/dirs
+        fs = self.get('get_fs')()
+        basket = self.state.basket
+        b =  basket[1:].filter(def(it): return fs.files[it] or fs.dirs[it]; )
+        if b.length != basket.length - 1:
+            b.unshift(basket[0])
+            self.commit('set_basket', b)
+
+    @vc.getter
+    def path(self, st, c):
+        return [it.name for it in c.self.path_arr].join('/')
+
+    @vc.getter
+    def list_dir(self, st, c):
+        fs = c.self.get_fs()
+        ret = []
+        ids = fs.list_dir(st.dir_id)
+        for id in ids:
+            ret.push(fs.get_info(id))
+        return ret
+
+    @vc.getter
+    def row_actions(self, st, c):
+        def inner(r):
+            ret = []
+            if r.type == 'file':
+                ret.push({
+                     name:'row_download',
+                     icon: { class: 'fa fa-download', style: 'color: gray'}
+                })
+            return ret
+        return inner
+
+
+    @vc.action
+    def click_item(self, id):
+        fs = self.api.fs
+        if fs.dirs[id]:
+            self.commit('set_dir', id)
+        # maybe save_as mode
+        elif (save_as = self.get('save_as')):
+            save_as.name = fs.get_info(id).name
+            self.commit('save_as', save_as)
+        else:
+            win_id = self.get('/editor.active_window')
+            self.dispatch('/editor.open_by_id', id, win_id)
+            self.commit('$.toggle_explorer', False)
+
+    @vc.action
+    @catch_error
+    @asyncer
+    def doit(self, a, payload):
+        fs = self.api.fs
+        cur_dir = self.get('dir_id')
+        selected = self.get('selected')
+        if a == 'row_download':
+            if (fl = fs.files[payload]):
+                common.download(fl.content, fl.name)
+        elif a == 'upload':
+            def save_files(files):
+                for f in files:
+                    fid = fs.create_file(f.name, cur_dir)
+                    fs.write_file(fid, f.value)
+                self.$emit('fs_changed')
+            common.upload_text().then(save_files)
+
+        elif a == 'save_as':
+            fid = fs.create_file(payload.name, cur_dir)
+            fs.write_file(fid, payload.content)
+            self.commit('save_as', None)
+            adoc = self.get('/editor.active_doc_num')
+            self.dispatch('/editor.open_by_id', fid, self.get('/editor.active_window'), adoc )
+            self.$emit('fs_changed')
+            self.commit('$.toggle_explorer', False)
+        elif a == 'create':
+            if not payload:
+                return
+            if payload.endsWith('/'):
+                fs.create_dir(payload[:-1], cur_dir)
+                pass
+            else:
+                fs.create_file(payload, cur_dir, '')
+            self.$emit('fs_changed')
+        elif a == 'del':
+            ok_cancel = yield self.start_modal('confirm',
+                           {message: 'You want to delete some files, are you sure?', status :'danger'})
+            if ok_cancel is 'cancel': return
+            for id in selected:
+                if selected[id]:
+                    fs.del_any(id)
+            self.commit('clear_selected')
+            self.commit('fix_basket')
+            self.$emit('fs_changed')
+        elif a in ['cut', 'copy']:
+            basket = [a]
+            for id in selected:
+                if selected[id]: basket.push(id);
+            self.commit('set_basket', basket)
+        elif a == 'paste':
+            basket = self.get('basket')
+            if basket[0] == 'copy':
+                for id in basket[1:]:
+                    fs.copy_any(id, cur_dir)
+            elif basket[0] == 'cut':
+                for id in basket[1:]:
+                    fs.move(id, cur_dir)
+            self.commit('set_basket', [])
+            self.$emit('fs_changed')
+        elif a == 'clear_basket':
+            self.commit('set_basket', [])
+        print(a, payload)
+
+store = RS_store(DEFSTATE, vc, Explorer())
+if __name__ == '__main__':
+    pass
