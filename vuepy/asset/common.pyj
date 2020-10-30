@@ -1,5 +1,17 @@
 #common.pyj
 
+def to_pascal(txt):
+    single_word = True
+    def clearAndUpper(text):
+        nonlocal single_word
+        if single_word:
+            single_word = text[0] != '_'
+        return text.replace(/_/, "").toUpperCase()
+    ret = txt.replace(/((^[^_])|(_\w))/g, clearAndUpper)
+    if single_word:
+        ret = 'X'+ ret
+    return ret
+
 class Merge_call:
     def set_key(self, a):
         self.cmd = 'set_key'

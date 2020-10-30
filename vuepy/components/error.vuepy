@@ -17,7 +17,7 @@ from asset.rs_vue import V_collector, RS_vue
 vc = V_collector()
 class CError(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.template = templ
         self.map_store = {
            err: 'compile_error',

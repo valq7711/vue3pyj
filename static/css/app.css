@@ -157,7 +157,6 @@ form{
 }
 
 
-
 .work-grid{
     display: grid;
     height:100%;
@@ -189,6 +188,11 @@ form{
     font-size:14px;
     letter-spacing:0.3px;
 }
+
+.work-grid > *, .editor-grid > *{
+    min-width:0; /* enable overflow-x:auto */
+}
+
 
 
 /*--------------[anime] ---------------------*/

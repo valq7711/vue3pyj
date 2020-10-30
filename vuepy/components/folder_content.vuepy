@@ -3,47 +3,47 @@ v-def templ_folder_content:
         div(class = 'panel-block'):
             nav(class="breadcrumb"):
                 ul:
-                    li(v-for = 'dir in path', @click.stop = 'change_dir(dir.id)'):
-                        a(href = '#'):
-                            span(class = 'tag is-medium'):'{{dir.name}}'
-                    li:
-                        a:
-                            div(class = 'field is-grouped'):
-                                div(class = 'field has-addons', style = 'margin-bottom:inherit;'):
-                                    p(class = 'control'):
-                                        input(ref = 'new', style = 'width:180px;', class = 'input',
-                                              :value = 'save_as && save_as.name',
-                                              placeholder = 'newfile.py'):
-                                    p(class = 'control mr-2'):
-                                        template(v-if = 'save_as'):
-                                            button(
-                                                class ='button is-info',
-                                                @click.stop = "(action('save_as', {name: \$refs.new.value, content: save_as.content}))"
-                                            ): 'Save'
-                                        template(v-else):
-                                            button(
-                                                class ='button is-info',
-                                                @click.stop = "(action('create', \$refs.new.value))"
-                                            ): 'Create'
-                                p(class = 'control'):
-                                    button(
-                                        class ='button is-primary',
-                                        @click.stop = "action('upload')"
-                                    ): 'Upload'
+                    li(v-for = 'dir in path',
+                       @click.stop = 'change_dir(dir.id)'
+                    ): a: span(class = 'tag is-medium'): '{{dir.name}}'
+                    li: a: div(class = 'field is-grouped'):
+                        div(class = 'field has-addons', style = 'margin-bottom:inherit;'):
+                            p(class = 'control'): input(
+                                ref = 'new',
+                                style = 'width:180px;',
+                                class = 'input',
+                                :value = 'save_as && save_as.name',
+                                placeholder = 'newfile.py'
+                            ):
+                            p(class = 'control mr-2'):
+                                button(v-if = 'save_as',
+                                    class ='button is-info',
+                                    @click.stop = "(action('save_as', {name: $refs.new.value, content: save_as.content}))"
+                                ): 'Save'
+                                button(v-else,
+                                    class ='button is-info',
+                                    @click.stop = "(action('create', $refs.new.value))"
+                                ): 'Create'
+                        p(class = 'control'): button(
+                            class ='button is-primary',
+                            @click.stop = "action('upload')"
+                        ): 'Upload'
 
         div(class = 'panel-block'):
             div(class='buttons'):
-                button(v-for = 'it in actions', @click.stop = 'it.disabled || action(it.name)',
+                button(v-for = 'it in actions',
+                   class = 'button',
+                   @click.stop = 'it.disabled || action(it.name)',
                    :disabled = 'it.disabled',
-                   class = 'button', :class = "'is-' + (it.status ? it.status: 'primary' )"
+                   :class = "'is-' + (it.status ? it.status: 'primary' )"
                 ):
                     '{{it.label}}'
-                    span(v-if = 'selected_cnt(it.name)>0', class = 'badge'
+                    span(v-if = 'selected_cnt(it.name)>0',
+                        class = 'badge'
                     ): '{{selected_cnt(it.name)}}'
-                button(v-if = "selected_cnt('paste')>0" , @click.stop = "action('clear_basket')",
-                   class = 'button is-primary'
-                ):
-                    'Clear clipboard'
+                button(v-if = "selected_cnt('paste')>0", class = 'button is-primary',
+                   @click.stop = "action('clear_basket')"
+                ): 'Clear clipboard'
 
         div(class = 'panel-block is-block'):
             div:
@@ -52,10 +52,8 @@ v-def templ_folder_content:
                         tr(style = 'background-color:whitesmoke;'):
                             th(v-for = 'fld, idx in fields',
                                :colspan='idx == 0 ? 2 : 1',
-                            ):
-                                '{{fld.label}}'
-                            th(v-if = 'row_actions'):
-                                'actions'
+                            ): '{{fld.label}}'
+                            th(v-if = 'row_actions'): 'actions'
                         tr(class = 'tr0'):
                             th(style = 'width:45px;'):
                             th(v-for = 'fld in fields', :style = "{width: (fld.width || 'initial')}"):
@@ -73,21 +71,24 @@ v-def templ_folder_content:
                            :key = 'row.id',
                            :class = '{"is-selected": selected[row.id]}'
                           ):
-                            td:
-                                i(class='clickable',  :class = 'row._icon_.class', :style='row._icon_.style', @click.stop = 'click(row.id)'):
+                            td: i(class='clickable',
+                              :class = 'row._icon_.class',
+                              :style='row._icon_.style',
+                              @click.stop = 'click(row.id)'
+                            ):
                             td(v-for = 'fld, idx in fields'):
-                                template(v-if = 'idx==0'):
-                                    span(class='clickable', @click.stop = 'click(row.id)'):
-                                        '{{row[fld.name]}}'
-                                template(v-else):
-                                    span:
-                                        '{{row[fld.name]}}'
+                                span(v-if = 'idx==0',
+                                    class='clickable',
+                                    @click.stop = 'click(row.id)'
+                                ): '{{row[fld.name]}}'
+                                span(v-else): '{{row[fld.name]}}'
                             td(v-if = 'row_actions'):
                                 span(v-for = 'ract in row_actions(row)', style='margin-right:3px;'):
                                     i(class='clickable',
-                                          :class = 'ract.icon.class',
-                                          :style='ract.icon.style',
-                                          @click.stop = 'action(ract.name, row.id)'):
+                                        :class = 'ract.icon.class',
+                                        :style='ract.icon.style',
+                                        @click.stop = 'action(ract.name, row.id)'
+                                    ):
 
 
 v-pyj:
@@ -109,7 +110,7 @@ def it_by_path(obj, path):
 vc = V_collector()
 class Folder_content(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.template = templ_folder_content
         self.map_store = {
             type_field: '/explorer.type_field',
@@ -203,7 +204,3 @@ class Folder_content(RS_vue):
 
 def make():
     return Folder_content()
-
-if __name__=='__main__':
-    main()
----

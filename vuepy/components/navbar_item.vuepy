@@ -1,15 +1,3 @@
-
-v-def templ:
-    template:
-        div(v-if = 'dropdown', class="navbar-item has-dropdown", :class = "{'is-hoverable': hoverable}" ):
-            a(class="navbar-link"):
-                slot(name = 'label'):
-            div(class = 'navbar-dropdown', :class = "{'is-right': side === 'right'}"):
-                slot:
-
-        a(v-else, class="navbar-item", :href = 'href'):
-            slot:
-
 v-pyj:
 +++
 from asset.rs_vue import RS_vue, V_collector
@@ -19,9 +7,7 @@ import click_out
 vc = V_collector()
 class Navbar_item(RS_vue):
     def __init__(self):
-        super(vc)
-        self.name = 'navbar-item'
-        #self.template = templ
+        super(vc, __name__)
         self.props = {
             hoverable: Boolean,
             dropdown: Boolean,
@@ -62,6 +48,11 @@ class Navbar_item(RS_vue):
                             "navbar-link": True,
                             'is-arrowless':self.arrowless
                         },
+                        attrs: { href: self.href },
+                        on: {
+                            def click(ctx, e):
+                                self.$emit('click', e)
+                       }
                     },
                     this.$scopedSlots.label({ activator })
                 )
@@ -106,13 +97,10 @@ class Navbar_item(RS_vue):
                                     self.$emit('click', e)
                            }
                         },
-                        self.$slots.default
+                        self.$slots.label or self.$slots.default
                     )
 
 
 
 def make():
     return Navbar_item()
-
-if __name__== '__main__':
-    main()

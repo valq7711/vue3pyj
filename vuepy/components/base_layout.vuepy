@@ -1,10 +1,23 @@
 v-def templ:
     def T(%tag = 'template'):
     div(data-vc = 'layout'):
-        top-menu(:menus= 'menus',
-                 @click_item= 'menu_click.apply(this, arguments)'):
+        XNavbar(
+            :fixed_top = 'true',
+            class = 'is-dark lift',
+            :menus= 'menus',
+        ):
+            T(v-slot:brand): NavbarItem: img(
+                :src="$root.v3p_static + '/vue3pyj_logo.png'",
+                class = 'metalic-btn',
+                style= 'border-radius:6px; padding:3px',
+                alt="vue3pyj"
+            ):
+                #div( v-for = "clr, cidx in ['#42b983', '#3a76ac', '#dcb946', '#bb0000']",
+                #    style = 'display:inline-block;height:50px;',
+                #    :style = "{'background-color': clr, 'width': cidx > 0 ? '10px' : '20px'}"
+                #):
             T(v-slot:search):
-                navbar-item(:dropdown = 'true', :arrowless = 'true', :use_activator = 'true', :panel = 'true'):
+                NavbarItem(:dropdown = 'true', :arrowless = 'true', :use_activator = 'true', :panel = 'true'):
                     T(v-slot:label = "{activator}"):
                         div(class='field has-addons'):
                             p(class = 'control'):
@@ -19,12 +32,12 @@ v-def templ:
                                 button(class = 'button is-info', @click.stop = 'search(activator)'):
                                     i(class='fa fa-search'):
                     T(v-slot:default = "{activator}"):
-                        search-view(:activator = 'activator'):
+                        SearchView(:activator = 'activator'):
             T(v-slot:flash = "{side}"):
-                navbar-item(ref = 'flash', :dropdown = 'true', :hoverable = 'true', :side = "side"):
+                NavbarItem(ref = 'flash', :dropdown = 'true', :hoverable = 'true', :side = "side"):
                     T(v-slot:label):
                         i(class='fa fa-bullhorn fa-flip-horizontal'):
-                    navbar-item(class = 'px-3'):
+                    NavbarItem(class = 'px-3'):
                         div(class  = 'notification py-1', :class = "'is-'+flash_status"):
                             T(v-if = 'flash.component'):
                                 component(:is = 'flash.component', v-bind = 'flash.cargs'):
@@ -34,7 +47,7 @@ v-def templ:
             slot:
 
 v-def modal_demo:
-    modal-b:
+    XModal:
         template(v-slot:title):
             'title'
         template(v-slot:body):
@@ -47,22 +60,41 @@ v-def modal_demo:
 v-pyj:
 +++
 from asset.rs_vue import V_collector, RS_vue
-from components import menu_b as menu, modal_b, search_view
+from components import modal, search_view
+
+def install_cmd_router(push_cmd):
+    def parse_cmd(s):
+        s  = decodeURIComponent(s)
+        cmd_args = /(^\w+)(\(.+)?/.exec(s)
+        if not (cmd = cmd_args[1]):
+            return
+        if (raw_args = cmd_args[2]) and  not (args = /^\((.*?)\)$/.exec(raw_args)):
+            raise Error('bad command args: ' + raw_args)
+        args = args and args[1].trim() ? JSON.parse('[' + args[1] + ']') : []
+        return [cmd, args]
+
+    def cmd_router(e):
+        if (hash = location.hash) and hash.startsWith('#cmd:'):
+            cmd_args = parse_cmd(hash[5:])
+            if cmd_args:
+                push_cmd(cmd_args[0], cmd_args[1])
+            location.hash = ''
+    window.addEventListener("hashchange", cmd_router)
 
 vc = V_collector()
 class Layout(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.template = templ
         self.components = {
-            'top-menu': menu.make(),
-            'search-view': search_view.make()
+            #'TopMenu': menu.make(),
+            'SearchView': search_view.make()
         }
         self.map_store = {
+            push_cmd: 'push_cmd~',
             flash: 'flash',
             is_busy:  'is_busy',
             menus: 'menus',
-            menu_click: 'menu_click*',
             modal_state: 'modal_state',
             close_modal: 'close_modal*',
             set_search: 'search=',
@@ -100,13 +132,13 @@ class Layout(RS_vue):
         if v:
             modal_state = self.modal_state
             component = modal_state.inner_component
-            if component in ['confirm', 'dialog']:
+            if component in ['XConfirm', 'XDialog']:
                 props = Object.assign({type: component},  self.modal_state.inner_args)
-                modal_b.open(self, { props }).then(def(*args): self.close_modal(*args);)
+                modal.open(self, { props }).then(def(*args): self.close_modal(*args);)
             else:
                 if type(component) is 'String':
                     component = self.constructor.component(component)
-                self.modal = modal_b.open(self, {
+                self.modal = modal.open(self, {
                     props: self.modal_state.inner_args,
                     component: component,
                     can_cancel: modal_state.cancelable,
@@ -117,6 +149,8 @@ class Layout(RS_vue):
                 self.modal.$modal.close()
             self.modal = None
 
+    def created(self):
+        install_cmd_router(self.push_cmd)
+
 def  make():
     return Layout()
----

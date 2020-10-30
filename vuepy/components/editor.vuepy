@@ -78,7 +78,7 @@ from asset.rs_vue import RS_vue, V_collector
 vc = V_collector()
 class Editor(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.template = templ_editor
         self.map_store = {
             push_cmd:'push_cmd~',
@@ -104,13 +104,15 @@ class Editor(RS_vue):
         return ret
 
     def open_dir(self):
-        self.push_cmd(
-            'toggle_explorer',
-            def():
-                self.set_dir(self.doc_info.parent)
-                self.toggle_explorer(True);
-           , True
-        )
+        self.set_dir(self.doc_info.parent)
+        location.hash = '#cmd:toggle_explorer'
+        #self.push_cmd(
+        #    'toggle_explorer',
+        #    def():
+        #        self.set_dir(self.doc_info.parent)
+        #        self.toggle_explorer(True);
+        #   , True
+        #)
 
 
     @vc.computed

@@ -165,7 +165,7 @@ class Explorer:
                 fs.create_file(payload, cur_dir, '')
             self.$emit('fs_changed')
         elif a == 'del':
-            ok_cancel = yield self.start_modal('confirm',
+            ok_cancel = yield self.start_modal('XConfirm',
                            {message: 'You want to delete some files, are you sure?', status :'danger'})
             if ok_cancel is 'cancel': return
             for id in selected:

@@ -1,32 +1,45 @@
 def get_menu(web23py):
     user = {
-        label: '<i title="Logout" class = "fa fa-sign-out-alt"></i>',
+        html: '<i title="Logout" class = "fa fa-sign-out-alt"></i>',
         href: '#cmd:logout',
         name: 'logout',
     }
 
     ret = {
         left: [
-            {label: '<i class = "fa fa-power-off nav-app-selector"></i>', href: '#cmd:select_app', title:'select app to edit'},
-            {label: '<button class = "button metalic-btn">${w23p_app}</button>', href: '#cmd:toggle_explorer'},
+            {html: '<i class = "fa fa-power-off nav-app-selector"></i>', href: '#cmd:select_app', title:'select app to edit'},
+            {html: {template: '<button class = "button metalic-btn">{{$store.state.w23p_app}}</button>'}, href: '#cmd:toggle_explorer'},
             {label: 'Save', href: '#cmd:save' },
             {label: 'Compile', href: '#cmd:compile'},
             {label: 'Editor',subitems: [
                 {label: 'Close all', href: '#cmd:close_all'},
                 {label: 'Save all & close', href: '#cmd:save_all_close'},
             ]},
-            {label: '<i title="reload current app into vue3pyj" class = "fa fa-sync" style = "color:#ecb700;"></i>', href: '#cmd:reload'},
-            {label: 'ritem1', slot: 'search'},
+            {html: '<i title="reload current app into vue3pyj" class = "fa fa-sync" style = "color:#ecb700;"></i>', href: '#cmd:reload'},
+            {slot: 'search'},
         ],
         right: [
-            {label: 'flash', slot: 'flash'},
-            web23py is 'web2py' \
-                ? {
-                    label: 'Errors', href: '../../admin/default/errors/${w23p_app}',
-                    attrs: { target : '_blank', rel : 'noopener'}
-                } \
-                : {label:'Reload Apps', name:'reload_apps', href:'#cmd:reload_apps'},
-            user,
+            {slot: 'flash'},
         ]
     }
+    if web23py is 'web2py':
+        ret.right.push({
+            label: 'Errors',
+            href: '../../admin/default/errors/${w23p_app}',
+            attrs: { target : '_blank', rel : 'noopener'}
+        })
+    else:
+        #(tmp = ret.right).push.call(tmp,
+        #    {label:'Reload', name:'reload_app', href:'#cmd:reload_app'},
+        #    {label:'Reload Apps', name:'reload_apps', href:'#cmd:reload_apps'}
+        #)
+        ret.right.push(
+            {label:'Reload', href:'#cmd:reload_app',
+                attrs: {hoverable: True},
+                subitems:[
+                    {label:'Reload Apps',href:'#cmd:reload_apps'}
+                ]
+            }
+        )
+    ret.right.push(user)
     return ret

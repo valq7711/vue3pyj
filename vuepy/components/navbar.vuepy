@@ -1,0 +1,76 @@
+v-def templ:
+    def T(%tag = 'template'):
+    nav(class="navbar", :class = "{'is-fixed-top': fixed_top}"):
+        div(class = 'container'):
+            div(class = 'navbar-brand'):
+                slot(name = 'brand'):
+                a(class="navbar-burger burger", @click = 'is_active = !is_active'):
+                    span(v-for = 'i in 3', aria-hidden="true"):
+
+            div(class="navbar-menu", :class = "{'is-active':is_active}"):
+                T(v-for = "side in ['left', 'right']"):
+                    div(:class="'navbar-' + (side == 'left' ? 'start' : 'end')"):
+                        T(v-for="item in menus[side]"):
+                            T(v-if = "item.slot"):
+                                slot(:name = 'item.slot', v-bind:side ='side'):
+                            T(v-else):
+                                NavbarItem(
+                                    :side = 'side',
+                                    :href = "item.href || null",
+                                    v-on = "item.on || null",
+                                    v-bind = "item.attrs || null",
+                                    :title = "item.title || null",
+                                    :dropdown = '!!item.subitems',
+                                ):
+                                    T(v-slot:label):
+                                        T(v-if = "get_slot(item.label)"): slot(:name = 'get_slot(item.label ,)', v-bind:side ='side'):
+                                        T(v-else-if = "item.html"):
+                                            component(:is ="to_component(item.html)"):
+                                        T(v-else):  strong: '{{item.label}}'
+                                    NavbarItem(
+                                        v-for = 'subitem, idx in item.subitems',
+                                            :side = 'side',
+                                            :href= "subitem.href || null",
+                                            v-on = "subitem.on || null",
+                                            v-bind = "subitem.attrs || null",
+                                            :title = "subitem.title || null",
+                                            :key = 'idx',
+                                    ): T(v-slot:label):
+                                        T(v-if = "subitem.slot"): slot(:name = 'subitem.slot', v-bind:side ='side'):
+                                        T(v-else-if = "subitem.html"):
+                                            component(:is ="to_component(subitem.html)"):
+                                        T(v-else):  strong: '{{subitem.label}}'
+
+
+v-pyj:
++++
+from asset.rs_vue import RS_vue, V_collector
+
+vc = V_collector()
+class Navbar(RS_vue):
+    def __init__(self):
+        super(vc, __name__)
+        self.template = templ
+        self.props = {
+            fixed_top: Boolean,
+            menus: Object
+        }
+    def data(self):
+        return {
+            is_active:False
+        }
+
+    def to_component(self, a):
+        if v'typeof a' is 'string':
+            return {template: a}
+        return a
+
+    def get_slot(self, label):
+        return label and label.split(':')[1]
+
+    def beforeMount(self):
+        if self.fixed_top:
+            document.body.style.paddingTop = '50px'
+
+def make():
+    return Navbar()

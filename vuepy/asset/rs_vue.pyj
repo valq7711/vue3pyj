@@ -12,7 +12,9 @@ def is_special(name):
 
 
 class RS_vue:
-    def __init__(self, v_collector):
+    def __init__(self, v_collector, name):
+        if name:
+            self.name = name.split('.')[-1]
         self.props = {}
         if (tmp = self.data or self._init_data):
             self.data = tmp

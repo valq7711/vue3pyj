@@ -229,7 +229,7 @@ class Editor:
     def $close(self, doc_num):
         doc_info = self.get('doc_infos')[doc_num]
         if not doc_info.is_saved:
-            ok_cancel =  yield self.start_modal('confirm',
+            ok_cancel =  yield self.start_modal('XConfirm',
                            {message: doc_info.name + ' is not saved! Do you want to continue?'})
             if ok_cancel is 'cancel':
                 return 'cancel'
@@ -334,7 +334,7 @@ class Editor:
         ftype = self.map_ftype(fp)
         def post_proc(r):
             if r.error:
-                self.flash({component: 'error'}, 'error')
+                self.flash({component: 'XError'}, 'error')
             else:
                 self.flash('ok', 'ok')
         self.dispatch('$.compile', ftype, s, fp, compile_only).then(post_proc)

@@ -1,12 +1,12 @@
 v-def app_templ:
     div(style = 'position:fixed; top:50px; bottom: 5px; left:5px; right:5px;'):
-        layout(ref = 'layout'):
+        BaseLayout(ref = 'layout'):
             div(style = 'width:100%; padding: 0 10px;'):
                 div(v-if = 'show_explorer',class = 'explorer', style = 'position:absolute;'):
-                    folder_content(v-blurClick = '{exclude: [], handler: "hide_explorer"}'):
+                    FolderContent(v-blurClick = '{exclude: [], handler: "hide_explorer"}'):
                 div(class = 'work-grid'):
                     #div(class = 'work-grid-sidebar'):
-                    editor(class = 'px-1',:style = "{'grid-column-start': 1, 'grid-column-end': 4}"):
+                    XEditor(class = 'px-1',:style = "{'grid-column-start': 1, 'grid-column-end': 4}"):
                     #div(class = 'work-grid-sidebar'):
 
 
@@ -18,24 +18,25 @@ from asset.rs_vue import RS_vue, V_collector
 from asset import common
 
 import components with \
-    confirm, app_selector, login, error,\
-    folder_content, editor, base_layout, modal_b, flash_b, dropdown_b, \
-    nav, navbar_item
+    app_selector, login, error,\
+    folder_content, editor, base_layout, modal, flash, dropdown, \
+    navbar, navbar_item
 
 from store.root import make as make_store
 
 Vue.directive('blurClick', click_out.opt)
 
 def reg_components():
-    comps = 'modal_b confirm app_selector login error dropdown_b nav navbar_item'.split(/ +/)
-    for c in comps:
-        cname = c.replace(/_/g, '-')
-        if cname is 'nav': cname = 'nav-bar'
-        Vue.component(cname, components[c].make())
+    for cname in components:
+        c = components[cname].make()
+        c.name = common.to_pascal(c.name)
+        Vue.component(c.name, c)
 reg_components()
 
-Vue.prototype.$flash = components.flash_b.open
-Vue.prototype.$v_modal = components.modal_b.open
+
+
+Vue.prototype.$flash = components.flash.open
+Vue.prototype.$v_modal = components.modal.open
 Vue.prototype.$busy = def(v): (this.$root or this).toggle_busy(v);
 
 
@@ -58,9 +59,6 @@ class App(RS_vue):
             is_busy:'is_busy',
             toggle_busy:'toggle_busy~'
         }
-        comps = 'folder_content editor base_layout'.split(/ +/)
-        reg_as = {base_layout: 'layout'}
-        self.components = {(reg_as[c] or c):components[c].make() for c in comps }
 
     def created(self):
         params = self.$options.params
@@ -96,11 +94,12 @@ class App(RS_vue):
 
 
     def hide_explorer(self, e):
-        self.push_cmd(
-            'toggle_explorer',
-            def(): self.toggle_explorer(False);
-            , True
-        )
+        location.hash = '#cmd:toggle_explorer'
+        #self.push_cmd(
+        #    'toggle_explorer',
+        #    def(): self.toggle_explorer(False);
+        #    , True
+        #)
 
     @common.asyncer
     def mounted(self):
@@ -110,7 +109,7 @@ class App(RS_vue):
         self.$busy(True)
         yield store.dispatch('w23p_app_list')
         while not self.w23p_app:
-            app2edit = yield store.dispatch('start_modal', 'app-selector', {app_list: store.get('w23p_app_list')} )
+            app2edit = yield store.dispatch('start_modal', 'AppSelector', {app_list: store.get('w23p_app_list')} )
             if app2edit!='cancel':
                 yield store.dispatch('load_fs_from_srv', app2edit)
 

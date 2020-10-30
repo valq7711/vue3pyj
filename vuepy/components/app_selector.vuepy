@@ -1,5 +1,5 @@
 v-def templ:
-    modal-b:
+    XModal:
         template(v-slot:title):
             'Select an app to edit'
         template(v-slot:body):
@@ -20,7 +20,7 @@ from asset.rs_vue import RS_vue, V_collector
 vc = V_collector()
 class App_selector(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.template = templ
         self.map_store = { }
         self.props = {

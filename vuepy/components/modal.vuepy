@@ -13,7 +13,7 @@ v-def templ:
 
 
 v-def templ_dialog:
-    modal-b(:can_cancel = 'true', :max_width = 'max_width', :max_height = 'max_height', @close = "$emit('close')"):
+    XModal(:can_cancel = 'true', :max_width = 'max_width', :max_height = 'max_height', @close = "$emit('close')"):
         template(v-slot:title):
             '{{title}}'
         template(v-slot:body):
@@ -35,7 +35,7 @@ async import Vue
 vc0 = vc = V_collector()
 class Dialog(RS_vue):
     def __init__(self):
-        super(vc0)
+        super(vc0, 'XDialog')
         self.props = {
             can_cancel: {type:Boolean, default:True},
             max_height: {type:String, default:'600px'},
@@ -55,7 +55,7 @@ class Dialog(RS_vue):
 vc1 = vc = V_collector()
 class Modal(RS_vue):
     def __init__(self):
-        super(vc1)
+        super(vc1, __name__)
         self.props = {
             can_cancel: {type:Boolean, default:True},
             max_height: String,
@@ -136,4 +136,3 @@ def open(parent, opt):
         )
     return p
 
----

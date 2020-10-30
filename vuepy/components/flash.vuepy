@@ -15,6 +15,7 @@ from asset.rs_vue import RS_vue, V_collector
 async import Vue
 
 notify = Vue.extend({
+    name: 'XNotify',
     template: templ,
     props:{message:String, status:String, basket: Object},
     data : def(): return {is_active: False};,
@@ -43,7 +44,7 @@ notify = Vue.extend({
 vc = V_collector()
 class Flash(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.props = {
             component: [Object, String],
             message: String,

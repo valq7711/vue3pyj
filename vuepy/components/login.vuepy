@@ -1,5 +1,5 @@
 v-def templ_login:
-    modal-b(:can_cancel = 'false', max_width = '300px'):
+    XModal(:can_cancel = 'false', max_width = '300px'):
         template(v-slot:title):
             'Login'
         template(v-slot:body):
@@ -27,7 +27,7 @@ from asset.common import asyncer
 vc = V_collector()
 class Login(RS_vue):
     def __init__(self):
-        super(vc)
+        super(vc, __name__)
         self.template = templ_login
         self.map_store = {
             'login' : 'login*',

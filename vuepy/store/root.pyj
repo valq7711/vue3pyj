@@ -103,7 +103,7 @@ class Root:
             axios,
             api_baseURL,
             self.$bus,
-            def(): return self.dispatch('start_modal', 'login');
+            def(): return self.dispatch('start_modal', 'XLogin');
         )
         self.api.fs = FS()
         self.api.CM = CodeMirror
@@ -201,14 +201,14 @@ class Root:
         return self.cmd_stack
 
     @vc.mutation
-    def push_cmd(self, name, cb, if_not):
+    def push_cmd(self, name, args, if_not):
         if if_not and self.cmd_stack.find(def(it): return it[0] is name;):
             return
 
         tm = def():
             idx = self.cmd_stack.findIndex(def(it): return it[1] is tm_off;)
             self.cmd_stack.splice(idx, 1)
-            cb()
+            self.dispatch('run', name, args)
 
         tm_id = setTimeout(tm, 0)
         tm_off = def():
@@ -317,7 +317,7 @@ class Root:
         yield self.api.server.post('logout')
         self.commit('toggle_busy', False)
         self.commit('is_logged=', False)
-        self.dispatch('start_modal', 'login')
+        self.dispatch('start_modal', 'XLogin')
 
     @vc.action
     @asyncer
@@ -327,11 +327,7 @@ class Root:
 
     @vc.action
     @asyncer
-    def menu_click(self, it):
-        is_cmd = /^#cmd:(.*)$/
-        if not it.href or not (cmd = is_cmd.exec(it.href)):
-            return
-        cmd = cmd[1]
+    def run(self, cmd, args):
         adoc_num = self.get('/editor.active_doc_num')
         if cmd is 'toggle_explorer':
             self.commit('toggle_explorer')
@@ -355,6 +351,8 @@ class Root:
             self.dispatch('logout')
         elif cmd is 'reload_apps':
             self.dispatch('reload_apps')
+        elif cmd is 'reload_app':
+            self.dispatch('reload_apps', self.get('w23p_app'))
 
     @vc.action
     @asyncer
@@ -411,7 +409,7 @@ class Root:
         self.commit('toggle_busy', True)
         yield self.dispatch('w23p_app_list')
         self.commit('toggle_busy', False)
-        app = yield self.dispatch('start_modal', 'app-selector', {app_list: self.get('w23p_app_list'), cur_app: self.get('w23p_app') } )
+        app = yield self.dispatch('start_modal', 'AppSelector', {app_list: self.get('w23p_app_list'), cur_app: self.get('w23p_app') } )
         if app is 'cancel':
             return
 
@@ -422,8 +420,11 @@ class Root:
         return self.dispatch('load_fs_from_srv', app)
 
     @vc.action
-    def reload_apps(self):
-        self.api.server.get('reload').then(
+    def reload_apps(self, app_name):
+        args= []
+        if app_name:
+            args.push(app_name)
+        self.api.server.get('reload', args).then(
             def(): self.$flash('Done!', 'ok');
         )
 
