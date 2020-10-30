@@ -1,0 +1,89 @@
+v-def templ:
+    div(class = 'panel'):
+        div(class = 'panel-heading'):
+            div(class = 'level'):
+                div(class = 'level-left'):
+                    div(class = 'level-item'):
+                        div(class = 'field is-grouped'):
+                            p(class = 'control', v-for  = "ext in ['PY', 'PYJ','VUEPY', 'JS', 'CSS', 'HTML']"):
+                                button(
+                                    class = 'button', :class = "{'is-primary': search_filters.get(ext)}",
+                                    @click = 'search_filters.toggle(ext)'
+                                ): '{{ext}}'
+                div(class = 'level-right ml-2'):
+                    div(class = 'level-item'):
+                        button(class = 'delete', @click = 'activator.set(false)'):
+        div(class = 'panel-block'):
+            div(class = 'panel is-shadowless', style = 'max-height:300px; overflow:auto; width:100%' ):
+                a(class ='panel-block px-3', v-for = "it, idx in result", :key = 'idx', style = 'width:100%;'):
+                    div(class = 'container', @click = 'open(it.id)'):
+                        div(class = 'level'):
+                            div(class = 'level-left'):
+                                div(class = 'level-item'):
+                                    strong(:style = "{'color': it.color}"):'{{it.fname}}'
+                            div(class = 'level-right ml-2'):
+                                div(class = 'level-item'):
+                                    '{{it.dir}}'
+
+
+
+v-pyj:
++++
+from asset.rs_vue import V_collector, RS_vue
+
+vc = V_collector()
+class Search_view(RS_vue):
+    def __init__(self):
+        super(vc, __name__)
+        self.template = templ
+        self.map_store = {
+            set_search: 'search=',
+            search_result:'search_result',
+            search_filters:'search_filters',
+            open:'/editor.open_by_id_in_active_window*',
+        }
+        self.props = {
+            activator:Object
+        }
+
+    @vc.computed
+    def result(self):
+        map_color = {
+            'py': 'blue',
+            'pyj': 'green',
+            'js': 'darkviolet',
+            'css': 'darkcyan',
+            'html': 'darkorange',
+        }
+
+        ret = []
+        i = 0
+        for i, it in enumerate(self.search_result):
+            it = it[1]
+            rec = {id: it.ids[-1]}
+            rec.idx = i
+            rec.fname = it._path[-1]
+            rec.dir = it._path[:-1].join('/') or '/'
+            rec.ext = rec.fname.split('.')[-1] or ''
+            rec.color = map_color[rec.ext] or 'black'
+            ret.push(rec)
+
+        #sort
+        ret = ret.sort(def(a, b):
+            if a.ext is b.ext:
+                ret = a.fname is b.fname \
+                    ? 0 \
+                    : a.fname > b.fname ? 1 : -1
+            else:
+                ret = a.ext > b.ext ? 1 : -1
+            return ret
+        )
+        return ret
+
+
+
+
+
+def make():
+    return Search_view()
+

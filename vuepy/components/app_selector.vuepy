@@ -1,0 +1,34 @@
+v-def templ:
+    XModal:
+        template(v-slot:title):
+            'Select an app to edit'
+        template(v-slot:body):
+            div( v-for  = 'app in app_list', class = 'field' ):
+                button(:class = "app == cur_app ? 'is-primary' : null",
+                       class = 'button is-fullwidth has-text-left',
+                       @click = '$emit("close", app)',
+                ): '{{app}}'
+        template(v-slot:footer):
+            div(class = 'container buttons is-right'):
+                button(class = 'button is-primary', @click = '$emit("close", "cancel")'):'Cancel'
+
+v-pyj:
++++
+from asset.rs_vue import RS_vue, V_collector
+#from components import modal_b as modal
+
+vc = V_collector()
+class App_selector(RS_vue):
+    def __init__(self):
+        super(vc, __name__)
+        self.template = templ
+        self.map_store = { }
+        self.props = {
+            app_list: Array,
+            cur_app: String,
+        }
+
+def make():
+    return App_selector()
+
+---

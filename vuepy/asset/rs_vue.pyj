@@ -1,0 +1,118 @@
+
+def is_hook(name):
+    return ['beforeCreate','created',
+            'beforeMount', 'mounted',
+            'beforeUpdate', 'updated',
+            'activated', 'deactivated',
+            'beforeDestroy', 'destroyed',
+            'render'].includes(name)
+
+def is_special(name):
+    return  /^(_.+|constructor)$/.test(name)
+
+
+class RS_vue:
+    def __init__(self, v_collector, name):
+        if name:
+            self.name = name.split('.')[-1]
+        self.props = {}
+        if (tmp = self.data or self._init_data):
+            self.data = tmp
+        #self.delimiters = ['${', '}']
+        self.methods = {}
+        if v_collector:
+            self.computed = v_collector._computed
+            self.directives = v_collector._directives
+            self.filters = v_collector._filters
+            self.watch = v_collector._watch
+            Object.assign(self.methods, v_collector._methods)
+            for it in [['~', '_mutations'], ['*', '_actions']]:
+                sym, _name = it
+                if v_collector[_name]:
+                    if not self.map_store:
+                        self.map_store = {}
+                    for k in v_collector[_name]:
+                        self.map_store[k] = sym
+                        self.methods[k] = v_collector[_name][k]
+
+        methods = Object.getOwnPropertyDescriptors(self.__proto__)
+        for meth in methods:
+            if is_special(meth) or v_collector and v_collector.__collected__[meth]:
+                continue
+            if is_hook(meth):
+                self[meth] = methods[meth].value
+            else:
+                self.methods[meth] = methods[meth].value
+
+    #def _init_data(self):
+    #    raise ReferenceError('Not implemented')
+
+def unpack_name_fun_opt(f_reg_as):
+    def unpacker(reg_as, name_fun_opt, opt):
+        self = this
+        if not name_fun_opt:
+            if  reg_as == '_getters': # 2way getter aka model
+                return def(f):
+                    # f() should return {get: ..., set: ...}
+                    name = f.__name__ or f.name
+                    return f_reg_as.call(self, reg_as, name, f())
+            else:
+                raise Error('Attempt to call V_Collector @decorator with empty `()`')
+
+        arg1type = type(name_fun_opt)
+        # Simple call:  @decor
+        if arg1type.startsWith('Fun'):
+            name = name_fun_opt.__name__ or name_fun_opt.name
+            return f_reg_as.call(self, reg_as, name, name_fun_opt)
+        # Factory call: @decor('name') or  @decor('name', {}) or @decor({})
+        else:
+            return def(f):
+                nonlocal opt
+                # @decor('name') or  @decor('name', {})
+                # if name_fun_opt is String then use it as name
+                if arg1type.startsWith('Str'):
+                    name = name_fun_opt
+                    if opt:
+                        opt.handler = f
+                    else:
+                        opt = f
+                # @decor({})
+                else:
+                    opt = name_fun_opt
+                    name = f.__name__ or f.name
+                    opt.handler = f
+                return f_reg_as.call(self, reg_as, name, opt)
+    return unpacker
+
+class V_collector:
+    def __init__(self):
+        self._methods = None
+        self._computed = None
+        self._watch = None
+        self._filters = None
+        self._directives = None
+
+        self._getters = None
+        self._mutations = None
+        self._actions = None
+        self.__collected__ = {}
+
+    @unpack_name_fun_opt
+    def _reg_as(self, reg_as, name, fun_opt):
+        if not self[reg_as]:
+            self[reg_as] = {}
+        self[reg_as][name] = fun_opt
+        self.__collected__[name] = True
+        return fun_opt.handler ? fun_opt.handler : fun_opt
+
+    def meth(self, name_or_fun):       return self._reg_as('_methods', name_or_fun)
+    def computed(self, name_or_fun):   return self._reg_as('_computed', name_or_fun)
+    def filter(self, name_or_fun):     return self._reg_as('_filters', name_or_fun)
+    def directive(self, name_or_fun):  return self._reg_as('_directives', name_or_fun)
+    def watch(self, name_or_fun, opt): return self._reg_as('_watch', name_or_fun, opt)
+
+    def getter(self, name_or_fun): return self._reg_as('_getters', name_or_fun)
+    def model(self, name_or_fun): return self._reg_as('_getters')(name_or_fun)
+    def mutation(self, name_or_fun): return self._reg_as('_mutations', name_or_fun)
+    def action(self, name_or_fun): return self._reg_as('_actions', name_or_fun)
+

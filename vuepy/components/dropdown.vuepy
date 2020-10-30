@@ -1,0 +1,27 @@
+v-def templ:
+    div(class="dropdown" ,:class = "{'is-active':is_active}"):
+        div(class="dropdown-trigger", @click = 'is_active = !is_active'):
+            button(class="button", aria-haspopup="true", aria-controls="dropdown-menu"):
+                span:'{{label}}'
+                span(class="icon is-small"):
+                    i(class="fas fa-angle-down", aria-hidden="true"):
+        div(class="dropdown-menu", role="menu"):
+            div(class="dropdown-content"):
+                slot:
+                #a(href="#", class="dropdown-item"):
+
+
+v-pyj:
++++
+from asset.rs_vue import RS_vue, V_collector
+
+vc = V_collector()
+class Dropdown(RS_vue):
+    def __init__(self):
+        super(vc, __name__)
+        self.template = templ
+        self.props = {label: String}
+        self.data = def(): return { is_active: False };
+
+def make():
+    return Dropdown()

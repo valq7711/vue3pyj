@@ -1,0 +1,108 @@
+v-def templ:
+    div(style = 'z-index:50;position:fixed;top:0;left:0;right:0;'): # need real dom-el-wrapper to avoid comments-polution
+        transition(name = 'trn',
+                   @before-leave = 'leave',
+                   @after-leave = "$emit('kill')",
+        ):
+            div(ref = 'el', v-if = 'is_active', class="notification flash-tr", :class = "'is-' + status"):
+                button(class = 'delete', @click = "$emit('close')"):
+                div(v-if = 'message', v-html = 'message'):
+                slot(v-else):
+
+v-pyj:
++++
+from asset.rs_vue import RS_vue, V_collector
+async import Vue
+
+notify = Vue.extend({
+    name: 'XNotify',
+    template: templ,
+    props:{message:String, status:String, basket: Object},
+    data : def(): return {is_active: False};,
+    def mounted(self):
+        self.is_active = True
+    methods:{
+        def leave(self, el, done):
+            if self.basket:
+                 basket_el = (self.basket.$el or self.basket)
+                 pos = basket_el.getBoundingClientRect()
+                 top = pos.height/2
+                 right  = (window.innerWidth - pos.right) + pos.width/2 - self.$refs.el.clientWidth/2
+                 requestAnimationFrame(def():
+                     el.style.transformOrigin = 'top'
+                     el.style.top = top + 'px'
+                     el.style.right = right + 'px'
+                     el.style.transform = 'scale(0.1)'
+                 )
+
+            else:
+                el.style.right = '-300px'
+    }
+})
+
+
+vc = V_collector()
+class Flash(RS_vue):
+    def __init__(self):
+        super(vc, __name__)
+        self.props = {
+            component: [Object, String],
+            message: String,
+            status: {type:String, default: 'info'},
+            duration: {type:Number, default: 500},
+            props: Object,
+            basket: Object
+        }
+
+        #self.template = templ
+
+    def render(self, h):
+        notify_props = {message:self.message, status:self.status, basket:self.basket}
+        if self.component:
+            cmp = h(self.component, {props:self.props})
+        return h(
+            notify, {
+                props: notify_props,
+                on:{
+                    'close': def(): self.kill();,
+                    'kill':  def(): self.kill();
+                }
+            },
+            [cmp]
+        )
+
+    def kill(self, dur):
+        if self._isDestroyed:
+            return
+        if self.kill_tm:
+            clearTimeout(self.kill_tm)
+            self.kill_tm = None
+
+        if dur is undefined:
+            if (prnt = self.$el.parentNode): prnt.removeChild(self.$el)
+            self.$destroy()
+            return
+
+        self.kill_tm =  setTimeout(def():
+            self.$children[0].is_active = False
+        , dur)
+
+    def mounted(self):
+        self.kill(self.duration)
+
+
+def make():
+    return Flash()
+
+fcmp = Vue.extend(Flash())
+def open(opt, parent):
+    parent = parent or this
+    vm = new fcmp({
+        parent,
+        propsData:opt,
+    })
+    el = document.body.appendChild(document.createElement('div'))
+    vm.$mount(el)
+    return vm
+
+---

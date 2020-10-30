@@ -1,0 +1,19 @@
+def load(amd):
+    mods = [
+            "codemirror/lib/codemirror",
+            "codemirror/mode/python/python",
+            "codemirror/mode/javascript/javascript",
+            "codemirror/mode/css/css",
+            "codemirror/mode/xml/xml",
+            "codemirror/mode/htmlmixed/htmlmixed",
+            "codemirror/addon/hint/show-hint",
+            "codemirror/addon/hint/javascript-hint",
+            "codemirror/addon/hint/anyword-hint",
+            "codemirror/addon/mode/simple",
+            "codemirror/addon/edit/matchbrackets",
+            "codemirror/addon/dialog/dialog",
+            "codemirror/addon/search/searchcursor",
+            "codemirror/addon/search/search",
+            "codemirror/keymap/vim",
+    ]
+    return amd.import(mods)

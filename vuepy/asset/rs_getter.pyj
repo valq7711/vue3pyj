@@ -1,0 +1,88 @@
+#
+def make_ref(src, props, target):
+    ret = target or {}
+    opt = {}
+    src_getter = def(n):
+        return def(): return src[n];
+    isArr = Array.isArray(props)
+    for p in props:
+        getter = isArr or not (map_from = props[p]) or map_from is '.' \
+            ? src_getter(p) \
+            : type(map_from) is 'String' ? src_getter(map_from) : map_from
+        opt[p] = {
+            configurable: False,
+            enumerable: True,
+            get: getter
+        }
+    Object.defineProperties(ret, opt)
+    return ret
+
+class RS_getter:
+    @staticmethod
+    def __set_vm__(vm):
+        this.prototype.$vm = vm
+
+    def __init__(self, name, getter, vtriggers, vm):
+        '''
+        + getter  - a callback with no args
+        + vtriggers  - some reactive node where `(name): {watcher: 0, getter: 0}` will be mounted
+        - vm - is optional, if not passed - RS_getter.prototype.$vm must be set
+        '''
+        self.name = name
+        self.getter = getter
+        self.vtriggers = vtriggers
+        self.vm = vm or self.$vm
+
+        self.value = None
+        self.unwatch = None
+        self.dirty = True
+        self.run_getter = False
+        self._getter_notified = False
+        self._triggers = None
+
+    def wrapped_getter(self):
+        self._triggers.watcher # !!! make it reactive
+        self.dirty = True
+        if not self.run_getter: # do nothing
+            #print('wrapped_getter:dummy call', self.name)
+            return True
+
+        #print('wrapped_getter:eval', self.name)
+        v = self.value = self.getter.call(None)
+        self.dirty = False
+        self.run_getter = False
+        return v
+
+    def watcher(self):
+        # so we use boolean as trigger (self._triggers.getter)
+        # it must be switched only once between render loops
+        if not self._notified:
+            self._triggers.getter ^= 1
+            self._notified = True
+            self.vm.$nextTick(def(): self._notified = False;)
+        #print('watcher', self.name)
+
+    def unmount(self):
+        self.unwatch()
+
+    def mount(self):
+        if self.unwatch:
+            raise Error(self.name + ' is already mounted!')
+        self.vm.$set(self.vtriggers, self.name, {watcher: 0, getter: 0})
+        self._triggers = self.vtriggers[self.name]
+        self.unwatch = self.vm.$watch(self.wrapped_getter.bind(self), self.watcher.bind(self), {sync: True})
+        return self
+
+    def get(self):
+        #print('getter', self.name)
+        if not self.unwatch:
+            raise Error('Unmounted getter: ' + self.name)
+            #self.mount()
+        self._triggers.getter # make it reactive
+        if self.dirty:
+            # we need to swicth _triggers.watcher twice
+            # to prevent Vue to recall getter due to  _triggers.watcher is changed
+            self._triggers.watcher ^= 1 # dummy call wrapped_getter
+            self.run_getter = True
+            self._triggers.watcher ^= 1 # eval getter
+        return self.value

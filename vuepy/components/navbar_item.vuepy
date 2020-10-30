@@ -1,0 +1,106 @@
+v-pyj:
++++
+from asset.rs_vue import RS_vue, V_collector
+import click_out
+
+
+vc = V_collector()
+class Navbar_item(RS_vue):
+    def __init__(self):
+        super(vc, __name__)
+        self.props = {
+            hoverable: Boolean,
+            dropdown: Boolean,
+            href: String,
+            side: String,
+            arrowless: Boolean,
+            use_activator: {type:Boolean, default: False},
+            panel:Boolean
+        }
+    def data(self):
+        return {
+            is_active: False
+        }
+
+    def hide(self):
+        self.is_active = False
+
+    def render(self, h):
+        if self.dropdown:
+            activator = {
+                set: def(v): self.is_active = v;,
+                get: def(): return self.is_active;
+            }
+
+            class_ = [
+                "navbar-item has-dropdown",
+                {
+                    'is-hoverable': self.hoverable,
+                    'is-active': self.is_active
+                }
+            ]
+            child = []
+            # navbar-link
+            child.push(
+                h('a',
+                    {
+                        'class': {
+                            "navbar-link": True,
+                            'is-arrowless':self.arrowless
+                        },
+                        attrs: { href: self.href },
+                        on: {
+                            def click(ctx, e):
+                                self.$emit('click', e)
+                       }
+                    },
+                    this.$scopedSlots.label({ activator })
+                )
+            )
+            # navbar-dropdown
+            dropdown_data = {
+                'class': {
+                    "navbar-dropdown":True,
+                    'is-right': self.side is 'right',
+                    'py-0': self.panel
+                }
+            }
+            if self.panel:
+                dropdown_data.style = {
+                    'border-radius': '6px'
+                }
+            child.push(
+                h('div', dropdown_data, self.$scopedSlots.default({ activator }) )
+            )
+
+            data = { 'class': class_}
+            if not self.hoverable:
+                if not self.use_activator:
+                    data.on = {def click(ctx):
+                        self.is_active = !self.is_active
+                    }
+
+                data.directives = []
+                data.directives.push({
+                    name: 'blur-click',
+                    value: {exclude: ['me'], handler: "hide"}
+                })
+                data.ref = 'me'
+            return h( 'div', data, child )
+
+        else:
+            return h('a',
+                        { 'class': "navbar-item",
+                           attrs: { href: self.href },
+                           on: {
+                                def click(ctx, e):
+                                    self.$emit('click', e)
+                           }
+                        },
+                        self.$slots.label or self.$slots.default
+                    )
+
+
+
+def make():
+    return Navbar_item()
