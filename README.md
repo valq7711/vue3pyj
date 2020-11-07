@@ -1,5 +1,5 @@
 <p align="center">
-  <img width = "150" src="https://raw.githubusercontent.com/valq7711/vue3pyj/dev/static/vue3pyj_logo.png">
+  <img width = "150" src="https://raw.githubusercontent.com/valq7711/vue3pyj/static/vue3pyj_logo.png">
 </p>
 <p align="center">
   <img src="https://raw.githubusercontent.com/valq7711/vue3pyj/dev/static/vue3pyj_art1.png">
