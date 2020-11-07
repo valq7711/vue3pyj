@@ -1,8 +1,8 @@
 <p align="center">
-  <img width = "150" src="https://raw.githubusercontent.com/valq7711/vue3pyj/static/vue3pyj_logo.png">
+  <img width = "150" src="https://raw.githubusercontent.com/valq7711/vue3pyj/master/static/vue3pyj_logo.png">
 </p>
 <p align="center">
-  <img src="https://raw.githubusercontent.com/valq7711/vue3pyj/dev/static/vue3pyj_art1.png">
+  <img src="https://raw.githubusercontent.com/valq7711/vue3pyj/master/static/vue3pyj_art1.png">
 </p>
 
 # WebIDE for [py4web](http://py4web.com) (evolution of the web2py) 
