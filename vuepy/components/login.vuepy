@@ -10,7 +10,8 @@ v-def templ_login:
                             name = 'password',
                             class = 'input',
                             type = 'password',
-                            placeholder = 'password'
+                            placeholder = 'password',
+                            @keydown.enter = "ok"
                         ):
                         span(class="icon is-small is-left"):
                             i(class="fas fa-lock"):

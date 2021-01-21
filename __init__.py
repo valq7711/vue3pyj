@@ -4,7 +4,7 @@ from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
 
-__static_version__ = '1.0.0'
+__static_version__ = '1.0.1'
 
 session = Session()
 
