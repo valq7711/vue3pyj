@@ -282,6 +282,10 @@ class Parser:
             ret =  {_type: 'comment', value: S.eat_to_end()}
         elif (q = S.match(/^('|")/)):
             ret = {_type: 'string', value: self.read_string(q[1])}
+        elif S.match(/^(\[\[)/):
+            ret = {_type: 'cat', value: S.match(/^.*?\]\]\s*$/, True)}
+            if not ret.value:
+                self.raise_err('Unexpected syntax')
         elif S.match(/^\s*\$/, True):
             if (var_name = S.match(/^(\w+)\s*=\s*/, True)):
                 ret = {_type: 'var_def', name: '$' + var_name[1],  value: self.read_var_def()}
@@ -438,7 +442,7 @@ class Parser:
                 token.parent = parent
                 child_nodes.push(token)
                 node = token
-            elif token._type == 'tag':
+            elif token._type in ['tag', 'cat']:
                 token.parent = parent
                 child_nodes.push(token)
                 node = token
@@ -465,7 +469,9 @@ class Parser:
     def allow_child(self, node):
         if node._type == 'main' or node._type == 'v-def' or (node._type == 'def' and not node['%tag']):
             return True
-        if node._type == 'tag' and ( not self.chunk_tbl[node.name] or self.chunk_tbl[node.name]['%tag']):
+        elif node._type == 'tag' and ( not self.chunk_tbl[node.name] or self.chunk_tbl[node.name]['%tag']):
+            return True
+        elif node._type == 'cat':
             return True
         return False
 
@@ -534,7 +540,14 @@ class RML_compiler:
             else:
                 is_chunk = True
 
-        if is_chunk:
+        if tag._type is 'cat':
+            child_nodes = tag.child_nodes
+            ret = [('\n' + ind ), tag.value]
+            start_content = ''
+            child_ind =  ind + '    '
+            close_tag[False] = ''
+            close_tag[True] = ''
+        elif is_chunk:
             if name in stack:
                 raise OutputError('Circular reference detected in chunk `' + name + '`', tag._pos.s[0], tag._pos.s[1], tag._pos.s[2])
             stack.push(name)

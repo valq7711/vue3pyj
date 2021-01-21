@@ -2989,6 +2989,14 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     _type: "string",
                     value: self.read_string(q[1])
                 };
+            } else if (S.match(/^(\[\[)/)) {
+                ret = {
+                    _type: "cat",
+                    value: S.match(/^.*?\]\]\s*$/, true)
+                };
+                if (!ret.value) {
+                    self.raise_err("Unexpected syntax");
+                }
             } else if (S.match(/^\s*\$/, true)) {
                 if (var_name = S.match(/^(\w+)\s*=\s*/, true)) {
                     ret = {
@@ -3200,7 +3208,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     token.parent = parent;
                     child_nodes.push(token);
                     node = token;
-                } else if (token._type === "tag") {
+                } else if (ՐՏ_in(token._type, [ "tag", "cat" ])) {
                     token.parent = parent;
                     child_nodes.push(token);
                     node = token;
@@ -3233,8 +3241,9 @@ var ՐՏ_modules = ՐՏ_def_modules();
             var self = this;
             if (node._type === "main" || node._type === "v-def" || node._type === "def" && !node["%tag"]) {
                 return true;
-            }
-            if (node._type === "tag" && (!self.chunk_tbl[node.name] || self.chunk_tbl[node.name]["%tag"])) {
+            } else if (node._type === "tag" && (!self.chunk_tbl[node.name] || self.chunk_tbl[node.name]["%tag"])) {
+                return true;
+            } else if (node._type === "cat") {
                 return true;
             }
             return false;
@@ -3328,7 +3337,14 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     is_chunk = true;
                 }
             }
-            if (is_chunk) {
+            if (tag._type === "cat") {
+                child_nodes = tag.child_nodes;
+                ret = [ "\n" + ind, tag.value ];
+                start_content = "";
+                child_ind = ind + "    ";
+                close_tag[false] = "";
+                close_tag[true] = "";
+            } else if (is_chunk) {
                 if (ՐՏ_in(name, stack)) {
                     throw new OutputError("Circular reference detected in chunk `" + name + "`", tag._pos.s[0], tag._pos.s[1], tag._pos.s[2]);
                 }
