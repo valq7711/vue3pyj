@@ -3,7 +3,7 @@ v-def templ_login:
         template(v-slot:title):
             'Login'
         template(v-slot:body):
-            form(ref = 'frm'):
+            form(ref = 'frm', method = 'post', @submit.prevent.stop):
                 div(class = 'field'):
                     p(class = 'control has-icons-left'):
                         input(
