@@ -140,3 +140,45 @@ def css_themes():
         if nm.endswith('.css') and pth.isfile(pth.join(css_dir, nm)):
             ret.append(nm[:-4])
     return dict(themes = ret)
+    
+@action('compile_py', method = 'POST')
+@session_secured
+def compile_py():
+    fp = request.json.get('fp')
+    w23p_app = request.json.get('w23p_app')
+    code = request.json.get('code')
+
+    fp = fp[0] == '/' and fp[1:] or fp
+    fp = os.path.join(APPS_FOLDER, w23p_app, fp)
+    if not os.path.isfile(fp):
+        #raise HTTP(404, web2py_error =  '`%s` not found' % fp)
+        abort(404, '`%s` not found' % fp)
+    if not fp.endswith('.py'):
+        raise abort(400, '`%s` is not python file' % fp)
+
+    code_raw = code if code is not None else fs2json.safe_read(fp)
+    code = code_raw.rstrip().replace('\r\n', '\n') + '\n'
+    highlight = None
+    import _ast
+    error = None
+    try:
+        compile(code, fp, "exec", _ast.PyCF_ONLY_AST)
+    except Exception as e:
+        # offset calculation is only used for textarea (start/stop)
+        start = sum([len(line) + 1 for l, line
+                     in enumerate(code_raw.split("\n"))
+                     if l < e.lineno - 1])
+        if e.text and e.offset:
+            offset = e.offset - (len(e.text) - len(
+                e.text.splitlines()[-1]))
+        else:
+            offset = 0
+        highlight = {'start': start, 'end': start +
+                     offset + 1, 'lineno': e.lineno, 'offset': offset}
+        try:
+            ex_name = e.__class__.__name__
+        except:
+            ex_name = 'unknown exception!'
+        error = dict(line = e.lineno, col = offset, message = ex_name)
+    return dict(err = error )
+    
