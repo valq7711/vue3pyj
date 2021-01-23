@@ -17,6 +17,7 @@ def get_menu(web23py):
             ]},
             {html: '<i title="reload current app into vue3pyj" class = "fa fa-sync" style = "color:#ecb700;"></i>', href: '#cmd:reload'},
             {slot: 'search'},
+            {slot: 'theme'},
         ],
         right: [
             {slot: 'flash'},

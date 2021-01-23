@@ -3,11 +3,26 @@ from asset.store3 import RS_store
 from asset.common import asyncer
 from asset import cm_vuepy, cm_rapydscript
 
+
+
+def loadCSS(url):
+    return Promise(def(resolve, reject):
+        link = document.createElement('link')
+        link.type = 'text/css'
+        link.rel = 'stylesheet'
+        link.onload = def(): resolve()
+        link.href = url
+        head = document.querySelector('head')
+        head.appendChild(link)
+    )
+
+
 def window_state():
     ret = {
         doc_num: None, # holds  '#[number]' of active document
         width: 960, # width of editor area
         get_cm: None,
+        theme: 'default'
     }
     return ret
 
@@ -17,7 +32,8 @@ EDITOR_DEFSTATE = {
     last_doc_num: 0, # counter to generate cur_doc_hnum as '#' + last_doc_num
     vim_mode: False,
     active_window: None,
-    windows : {}
+    windows : {},
+    css_themes:[],
 }
 
 
@@ -29,12 +45,14 @@ class Editor:
         self.inject = {
             api: 'api',
             flash: '$flash',
-            start_modal: '$start_modal'
+            start_modal: '$start_modal',
         }
         self.cm_docs = {}
         self.cm_windows = {}
+        self._css_loaded = {'default': True}
 
     def _mounted(self):
+        self.load_theme_list()
         self.init_cm()
         def on_changed(doc_num, cm_doc):
             #debounce
@@ -96,18 +114,28 @@ class Editor:
 
     @vc.action
     def mount_cm(self, el, win_id, opt):
+        theme =  self.api.get_local().css_theme
         def_opt = {
             mode: 'python',
             lineNumbers : True,
             showCursorWhenSelecting: True,
             matchBrackets: True,
             foldGutter: True,
-            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+            styleActiveLine: True,
         }
         opt = Object.assign(def_opt, opt or {})
         cm = self.cm_windows[win_id] = self.api.CM(el , opt)
         self.commit('add_window', win_id, {get_cm: def(): return cm;})
+        self.dispatch('set_theme', theme, win_id)
         return cm
+
+    @vc.mutation
+    def set_win_props(self, win_id, payload):
+        win = self.state.windows[win_id]
+        for v'var p in win':
+            if payload.hasOwnProperty(p):
+                self.$set(win, p, payload[p])
 
     @vc.mutation
     def add_window(self, win_id, st):
@@ -338,6 +366,37 @@ class Editor:
             else:
                 self.flash('ok', 'ok')
         self.dispatch('$.compile', ftype, s, fp, compile_only).then(post_proc)
+
+    @vc.action
+    @asyncer
+    def set_theme(self, css_theme, win_id):
+        win_id =  win_id or self.get('active_window')
+        cur_theme =  self.get('windows')[win_id].theme
+        if cur_theme == css_theme:
+            return
+        if not self._css_loaded[css_theme]:
+            url = f'static/js/codemirror/theme/${css_theme}.css'
+            yield loadCSS(self.api.url(url))
+            self._css_loaded[css_theme] = True
+        self.cm_windows[win_id].setOption("theme",css_theme)
+        self.commit('set_win_props', win_id, {theme: css_theme})
+        self.api.save_local('css_theme', css_theme)
+        for css in document.styleSheets:
+            if not /codemirror\/theme/.test(css.href):
+                continue
+            name = css.href.split('/')[-1][:-4]
+            if name == cur_theme:
+                css.disabled = True
+            if name == css_theme:
+                css.disabled = False
+
+
+    @asyncer
+    def load_theme_list(self):
+        css_themes = (yield self.api.server.get('css_themes')).data.themes
+        css_themes.push('default')
+        win_id = self.get('active_window')
+        self.commit('css_themes=', css_themes)
 
     #--------- utils -------------
     def map_ftype(self, fp):

@@ -22,6 +22,10 @@
             src: url(../fonts/RobotoMono-Bold.ttf) format('truetype');
             font-weight: bold;
 }
+@font-face { font-family: 'Roboto mono';
+            src: url(../fonts/RobotoMono-Thin.ttf) format('truetype');
+            font-weight: 100;
+}
 
 .busy{
     position: fixed;
@@ -185,8 +189,8 @@ form{
     overflow:auto;
     height: 100%;
     width:100%;
-    font-size:14px;
-    letter-spacing:0.3px;
+    font-size:13px;
+    letter-spacing:0.1px;
 }
 
 .work-grid > *, .editor-grid > *{

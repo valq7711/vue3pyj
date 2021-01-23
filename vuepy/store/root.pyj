@@ -107,9 +107,15 @@ class Root:
         )
         self.api.fs = FS()
         self.api.CM = CodeMirror
+        self.api.url = def(path): (self_app+'/'+path)
+        self.api.save_local = self.save_local.bind(self)
+        self.api.get_local = def(): return self.local_setting
 
         # output for compile
         self.output_path_map = path_map(web23py)
+
+        settings = window.localStorage.getItem('vue3pyj')
+        self.local_setting =  settings and JSON.parse(settings) or {}
 
         #----------- provide ----------
         self.provide = {
@@ -120,6 +126,10 @@ class Root:
             get $route(_): return self.$route;,
         }
 
+
+    def save_local(self, prop, value):
+        self.local_setting[prop] = value
+        window.localStorage.setItem('vue3pyj', JSON.stringify(self.local_setting))
 
     # server events
     def on_server(self, a):

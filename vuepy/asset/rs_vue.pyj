@@ -21,7 +21,7 @@ class RS_vue:
         #self.delimiters = ['${', '}']
         self.methods = {}
         if v_collector:
-            self.computed = v_collector._computed
+            self.computed = Object.assign({}, v_collector._computed, v_collector._getters)
             self.directives = v_collector._directives
             self.filters = v_collector._filters
             self.watch = v_collector._watch

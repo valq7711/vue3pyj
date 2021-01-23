@@ -68,7 +68,7 @@ def get_fs(w23p_app = None):
     dir_list = {
         'controllers':'*',
         'static': {
-            'js': {},
+            'js': '*', #{},
             'css': '*',
             'components': '*',
         },
@@ -130,3 +130,13 @@ def reload(name = None):
     Reloader.import_app(name) if name else Reloader.import_apps()
     return dict(flash = 'Done!')
 
+@action('css_themes')
+def css_themes():
+    app_folder = os.path.dirname(__file__)
+    pth = os.path
+    css_dir = pth.join(app_folder, 'static/js/codemirror/theme')
+    ret = []
+    for nm in os.listdir(css_dir):
+        if nm.endswith('.css') and pth.isfile(pth.join(css_dir, nm)):
+            ret.append(nm[:-4])
+    return dict(themes = ret)
