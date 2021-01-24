@@ -20,7 +20,7 @@ v-def templ_editor:
                             :key = 'doc_k',
                             :class = "{'is-active': doc_num == doc_k}"
                           ):
-                            a(@click = '(!$event.v3p_close && (swap_doc(doc_k), edit_focus()))'):
+                            a(@click = '($event.v3p_close ?  edit_focus() : (swap_doc(doc_k), edit_focus()))'):
                                 span:
                                     "{{doc.name}}"
                                 span(class = 'icon', @click = '($event.v3p_close = true, close(doc_k))'):
@@ -52,7 +52,7 @@ v-def templ_editor:
                                 '{{doc_dir}}'
                             span(class = 'pl-2', @click="open_dir"): '/ {{doc_info && doc_info.name}}'
             # editor window
-            div(style = 'overflow:auto;'):
+            div(style = 'overflow:auto;', @keydown.alt.81 = 'swap_prev'): # alt+q
                 div(class = 'editor-window'):
                     div( ref='cm_el', style = 'height:100%;'):
             div:
@@ -97,11 +97,25 @@ class Editor(RS_vue):
         }
     def data(self):
         self.console = console
+        self.prev_doc_num = None
         ret={
             cursor: { line:0, ch:0},
             error: None,
         }
         return ret
+
+    def swap_prev(self):
+        if self.prev_doc_num and self.doc_infos[self.prev_doc_num]:
+            self.swap_doc(self.prev_doc_num)
+        else:
+            keys = Object.keys(self.doc_infos)
+            if len(keys)>=2:
+                self.swap_doc(keys[-2])
+
+    def swap_doc(self, act, doc_k):
+        self.prev_doc_num = self.doc_num
+        act(doc_k)
+
 
     def open_dir(self):
         self.set_dir(self.doc_info.parent)

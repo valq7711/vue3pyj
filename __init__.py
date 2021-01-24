@@ -4,7 +4,7 @@ from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
 
-__static_version__ = '1.0.1'
+__static_version__ = '1.0.2'
 
 session = Session()
 
@@ -140,7 +140,7 @@ def css_themes():
         if nm.endswith('.css') and pth.isfile(pth.join(css_dir, nm)):
             ret.append(nm[:-4])
     return dict(themes = ret)
-    
+
 @action('compile_py', method = 'POST')
 @session_secured
 def compile_py():
@@ -181,4 +181,4 @@ def compile_py():
             ex_name = 'unknown exception!'
         error = dict(line = e.lineno, col = offset, message = ex_name)
     return dict(err = error )
-    
+

@@ -107,7 +107,11 @@ class Root:
         )
         self.api.fs = FS()
         self.api.CM = CodeMirror
-        self.api.url = def(path): (self_app+'/'+path)
+        self.api.url = def(path):
+            if (tmp = /^static\/?(.*)$/.exec(path)):
+                return self.params.app_static+'/'+ tmp[1]
+            return self_app+'/'+path
+
         self.api.save_local = self.save_local.bind(self)
         self.api.get_local = def(): return self.local_setting
 
