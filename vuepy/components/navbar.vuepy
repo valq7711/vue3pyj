@@ -47,9 +47,9 @@ v-pyj:
 from asset.rs_vue import RS_vue, V_collector
 
 vc = V_collector()
-class Navbar(RS_vue):
+@vc.component()
+class XNavbar(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ
         self.props = {
             fixed_top: Boolean,
@@ -73,5 +73,5 @@ class Navbar(RS_vue):
             document.body.style.paddingTop = '50px'
 
 def make():
-    return Navbar()
+    return XNavbar()
 }@

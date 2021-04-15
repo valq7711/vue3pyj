@@ -76,9 +76,9 @@ v-pyj:
 from asset.rs_vue import RS_vue, V_collector
 
 vc = V_collector()
-class Editor(RS_vue):
+@vc.component()
+class XEditor(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ_editor
         self.map_store = {
             push_cmd:'push_cmd~',
@@ -182,6 +182,6 @@ class Editor(RS_vue):
         self.cm.doc.setCursor(err.line-1, err.col)
 
 def make():
-    return Editor()
+    return XEditor()
 
 }@

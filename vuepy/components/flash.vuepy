@@ -42,9 +42,9 @@ notify = Vue.extend({
 
 
 vc = V_collector()
-class Flash(RS_vue):
+@vc.component()
+class XFlash(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.props = {
             component: [Object, String],
             message: String,
@@ -53,8 +53,6 @@ class Flash(RS_vue):
             props: Object,
             basket: Object
         }
-
-        #self.template = templ
 
     def render(self, h):
         notify_props = {message:self.message, status:self.status, basket:self.basket}
@@ -92,9 +90,9 @@ class Flash(RS_vue):
 
 
 def make():
-    return Flash()
+    return XFlash()
 
-fcmp = Vue.extend(Flash())
+fcmp = Vue.extend(XFlash())
 def open(opt, parent):
     parent = parent or this
     vm = new fcmp({

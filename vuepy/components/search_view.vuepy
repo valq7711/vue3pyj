@@ -32,9 +32,9 @@ v-pyj:
 from asset.rs_vue import V_collector, RS_vue
 
 vc = V_collector()
-class Search_view(RS_vue):
+@vc.component()
+class SearchView(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ
         self.map_store = {
             set_search: 'search=',
@@ -85,6 +85,6 @@ class Search_view(RS_vue):
 
 
 def make():
-    return Search_view()
+    return SearchView()
 
 }@

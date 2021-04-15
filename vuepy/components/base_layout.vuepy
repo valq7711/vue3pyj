@@ -95,12 +95,11 @@ def install_cmd_router(push_cmd):
     window.addEventListener("hashchange", cmd_router)
 
 vc = V_collector()
-class Layout(RS_vue):
+@vc.component()
+class BaseLayout(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ
         self.components = {
-            #'TopMenu': menu.make(),
             'SearchView': search_view.make()
         }
         self.map_store = {
@@ -160,7 +159,7 @@ class Layout(RS_vue):
             modal_state = self.modal_state
             component = modal_state.inner_component
             if component in ['XConfirm', 'XDialog']:
-                props = Object.assign({type: component},  self.modal_state.inner_args)
+                props = Object.assign({type: component[1:].toLowerCase()},  self.modal_state.inner_args)
                 modal.open(self, { props }).then(def(*args): self.close_modal(*args);)
             else:
                 if type(component) is 'String':
@@ -180,6 +179,6 @@ class Layout(RS_vue):
         install_cmd_router(self.push_cmd)
 
 def  make():
-    return Layout()
+    return BaseLayout()
 
 }@

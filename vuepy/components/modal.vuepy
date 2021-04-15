@@ -32,10 +32,10 @@ v-pyj:
 from asset.rs_vue import RS_vue, V_collector
 async import Vue
 
-vc0 = vc = V_collector()
-class Dialog(RS_vue):
+vc = V_collector()
+@vc.component()
+class XDialog(RS_vue):
     def __init__(self):
-        super(vc0, 'XDialog')
         self.props = {
             can_cancel: {type:Boolean, default:True},
             max_height: {type:String, default:'600px'},
@@ -52,10 +52,9 @@ class Dialog(RS_vue):
         self.template = templ_dialog
 
 
-vc1 = vc = V_collector()
-class Modal(RS_vue):
+@vc.component()
+class XModal(RS_vue):
     def __init__(self):
-        super(vc1, __name__)
         self.props = {
             can_cancel: {type:Boolean, default:True},
             max_height: String,
@@ -95,10 +94,10 @@ class Modal(RS_vue):
         self.is_active = False
 
 
-dialog = Vue.extend(Dialog())
+dialog = Vue.extend(XDialog())
 
 def make():
-    return Modal()
+    return XModal()
 
 def open(parent, opt):
     propsData = opt.props

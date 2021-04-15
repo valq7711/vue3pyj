@@ -26,9 +26,9 @@ from asset.rs_vue import V_collector,  RS_vue
 from asset.common import asyncer
 
 vc = V_collector()
-class Login(RS_vue):
+@vc.component()
+class XLogin(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ_login
         self.map_store = {
             'login' : 'login*',
@@ -49,6 +49,6 @@ class Login(RS_vue):
         else:
             self.flash('invalid password', 'error')
 def make():
-    return Login()
+    return XLogin()
 
 }@

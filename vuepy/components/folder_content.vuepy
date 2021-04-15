@@ -108,9 +108,9 @@ def it_by_path(obj, path):
 
 
 vc = V_collector()
-class Folder_content(RS_vue):
+@vc.component()
+class FolderContent(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ_folder_content
         self.map_store = {
             type_field: '/explorer.type_field',
@@ -203,5 +203,5 @@ class Folder_content(RS_vue):
 
 
 def make():
-    return Folder_content()
+    return FolderContent()
 }@

@@ -18,9 +18,9 @@ from asset.rs_vue import RS_vue, V_collector
 #from components import modal_b as modal
 
 vc = V_collector()
-class App_selector(RS_vue):
+@vc.component()
+class AppSelector(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ
         self.map_store = { }
         self.props = {
@@ -29,6 +29,6 @@ class App_selector(RS_vue):
         }
 
 def make():
-    return App_selector()
+    return AppSelector()
 
 }@

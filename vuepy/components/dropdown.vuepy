@@ -16,9 +16,9 @@ v-pyj:
 from asset.rs_vue import RS_vue, V_collector
 
 vc = V_collector()
+@vc.component()
 class Dropdown(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.template = templ
         self.props = {label: String}
         self.data = def(): return { is_active: False };

@@ -13,6 +13,12 @@ def is_special(name):
 
 class RS_vue:
     def __init__(self, v_collector, name):
+        if not v_collector:
+            v_collector = self.__vue_opt__
+        elif type(v_collector) is 'String':
+            name = v_collector
+            v_collector = self.__vue_opt__
+
         if name:
             self.name = name.split('.')[-1]
         self.props = {}
@@ -21,7 +27,15 @@ class RS_vue:
         #self.delimiters = ['${', '}']
         self.methods = {}
         if v_collector:
-            self.computed = Object.assign({}, v_collector._computed, v_collector._getters)
+            if (bases = v_collector.bases) and bases.length:
+                self.mixins = v_collector.bases.map(
+                    def(it):
+                        if isinstance(it, RS_vue):
+                            return it
+                        return new it()
+                )
+            #self.computed = v_collector._computed
+            self.computed = Object.assign({},  v_collector._computed,  v_collector._getters)
             self.directives = v_collector._directives
             self.filters = v_collector._filters
             self.watch = v_collector._watch
@@ -41,8 +55,14 @@ class RS_vue:
                 continue
             if is_hook(meth):
                 self[meth] = methods[meth].value
-            else:
+            elif methods[meth].value.call:
                 self.methods[meth] = methods[meth].value
+
+
+    @staticmethod
+    def make(*args):
+        cls = this
+        return new cls(*args)
 
     #def _init_data(self):
     #    raise ReferenceError('Not implemented')
@@ -95,14 +115,35 @@ class V_collector:
         self._getters = None
         self._mutations = None
         self._actions = None
+        self.__current__ = None
         self.__collected__ = {}
+
+    def _collector(self, opt_name, extra):
+        self.__current__ = {
+            __collected__: {}
+        }
+        if extra:
+            Object.assign(self.__current__, extra)
+        def wrapper(cls):
+            cls.prototype[opt_name] = self.__current__
+            cls.prototype.name = cls.name
+            self.__current__ = None
+            return cls
+        return wrapper
+
+    def component(self, *bases):
+        return self._collector('__vue_opt__', {bases})
+
+    def store(self):
+        return self._collector('__store_opt__')
 
     @unpack_name_fun_opt
     def _reg_as(self, reg_as, name, fun_opt):
-        if not self[reg_as]:
-            self[reg_as] = {}
-        self[reg_as][name] = fun_opt
-        self.__collected__[name] = True
+        cur = self.__current__ or self
+        if not cur[reg_as]:
+            cur[reg_as] = {}
+        cur[reg_as][name] = fun_opt
+        cur.__collected__[name] = True
         return fun_opt.handler ? fun_opt.handler : fun_opt
 
     def meth(self, name_or_fun):       return self._reg_as('_methods', name_or_fun)

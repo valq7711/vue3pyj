@@ -5,9 +5,9 @@ import click_out
 
 
 vc = V_collector()
-class Navbar_item(RS_vue):
+@vc.component()
+class NavbarItem(RS_vue):
     def __init__(self):
-        super(vc, __name__)
         self.props = {
             hoverable: Boolean,
             dropdown: Boolean,
@@ -103,5 +103,5 @@ class Navbar_item(RS_vue):
 
 
 def make():
-    return Navbar_item()
+    return NavbarItem()
 }@

@@ -29,7 +29,7 @@ Vue.directive('blurClick', click_out.opt)
 def reg_components():
     for cname in components:
         c = components[cname].make()
-        c.name = common.to_pascal(c.name)
+        #c.name = common.to_pascal(c.name)
         Vue.component(c.name, c)
 reg_components()
 
@@ -41,10 +41,10 @@ Vue.prototype.$busy = def(v): (this.$root or this).toggle_busy(v);
 
 
 vc = V_collector()
+@vc.component()
 class App(RS_vue):
     def __init__(self, params):
         store = window.store = make_store(params)
-        super(vc)
         self.params = params
         self.store = store
         self.template = app_templ
