@@ -7956,7 +7956,7 @@ Object.defineProperties(ՐՏ_103, {
             if (!(s = self.get("search"))) {
                 return [];
             }
-            r = new RegExp(s, "gm");
+            r = new RegExp(s, "m");
             fs = self.api.fs;
             ret = [];
             fext = self._get("search_filters");
