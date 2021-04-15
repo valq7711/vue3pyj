@@ -275,7 +275,7 @@ def def_mode(conf, parserConf):
                 offset = self.scopes[-1].offset
             elif /^('|")/.test(type): # js-string
                 pass
-            elif type.endsWith('---'):
+            elif type.endsWith('}@'):
                 offset = self.scopes[-1].offset
             else: # brakets
                 if not stream.match(/^(\s|#.*)*$/, False):
@@ -308,10 +308,10 @@ def def_mode(conf, parserConf):
             # Handle v-events
             if current == "@":
                 self.js_str_expect = True
-                return stream.match(identifiers, False) ? "meta" : ERRORCLASS
+                return stream.match(identifiers, False) ? "metasym" : ERRORCLASS
 
             if (style == "variable" or style == "builtin") \
-                    and self.lastStyle == "meta":
+                    and self.lastStyle == "metasym":
                 style = "meta"
 
             # scopes
@@ -393,24 +393,24 @@ def def_mode(conf, parserConf):
             r = None
             if not (local_state = state.local_state) and (mode_name = get_mode()):
                 if stream.indentation() >= scope.offset \
-                        or scope.offset-indentUnit == stream.indentation() and (r = stream.match(/^(\s*)\+{3}(\s|#.*)*$/)):
+                        or scope.offset-indentUnit == stream.indentation() and (r = stream.match(/^(\s*)@\{(\s|#.*)*$/)):
                     mode = CodeMirror.getMode(conf, mode_name)
                     state.local_state = CodeMirror.startState(mode, stream.indentation()) #indent(state, ""))
                     state.local_mode = mode
                 if r:
                     rml_mode.load_state(state)
-                    rml_mode.push_scope(stream, r[1]+'---')
+                    rml_mode.push_scope(stream, r[1]+'}@')
                     rml_mode.update_state(state)
-                    return 'operator'
+                    return 'meta'
             elif local_state and not (local_state.tokenize and local_state.tokenize.isString) \
                     and ( scope.type == 'tag' and stream.indentation() < scope.offset \
-                         or scope.type.endsWith('---') and (r = stream.match(RegExp('^' + scope.type + '(\\s*|#.*)*$')))
+                         or scope.type.endsWith('}@') and (r = stream.match(RegExp('^' + scope.type + '(\\s*|#.*)*$')))
                     ):
                 state.local_state = None
                 state.local_mode = None
                 if r:
-                    state.scopes.pop() # pop '---'
-                    return 'operator'
+                    state.scopes.pop() # pop '}@'
+                    return 'meta'
 
         if state.local_mode:
             return state.local_mode.token(stream, state.local_state)

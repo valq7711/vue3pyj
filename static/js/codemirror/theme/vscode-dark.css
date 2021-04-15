@@ -7,22 +7,23 @@
 }
 .cm-s-vscode-dark .cm-punctuation {color: #b4c1e0;}
 .cm-s-vscode-dark .CodeMirror-cursor {border-left: 2px solid #bebebe !important;}
-.cm-s-vscode-dark span.cm-meta {color: #569cd6}
+.cm-s-vscode-dark span.cm-metasym {color: #00bf06}
+.cm-s-vscode-dark span.cm-meta {color: #cfd08a}
 .cm-s-vscode-dark span.cm-number {color: #b5cea8}
 .cm-s-vscode-dark span.cm-keyword {line-height: 1em; font-weight: 400; color: #d885a8;}
-.cm-s-vscode-dark span.cm-def {color:#9cdcfe}
+.cm-s-vscode-dark span.cm-def {color:#00e627}
 .cm-s-vscode-dark span.cm-variable {color: #d8d8d8}
 .cm-s-vscode-dark span.cm-variable-2 {color: #9cdcfe}
 .cm-s-vscode-dark span.cm-variable-3,
 .cm-s-vscode-dark span.cm-type {color: #A9B7C6}
 .cm-s-vscode-dark span.cm-property {color: #9cdcfe}
-.cm-s-vscode-dark span.cm-operator {color: #d4d4d4}
+.cm-s-vscode-dark span.cm-operator {color: #77a0ff}
 .cm-s-vscode-dark span.cm-string {color: #ce9178}
 .cm-s-vscode-dark span.cm-string-2 {color: #6A8759}
 .cm-s-vscode-dark span.cm-comment {color: #6A9955}
 .cm-s-vscode-dark span.cm-link {color: #287BDE}
 .cm-s-vscode-dark span.cm-atom {color: #569cd6}
-.cm-s-vscode-dark span.cm-error {color: #BC3F3C}
+.cm-s-vscode-dark span.cm-error {color: #BC3F3C; text-decoration: underline dotted red;}
 .cm-s-vscode-dark span.cm-tag {color: #569cd6}
 .cm-s-vscode-dark span.cm-attribute {color: #9cdcfe}
 .cm-s-vscode-dark span.cm-qualifier {color: #d7ba7d}

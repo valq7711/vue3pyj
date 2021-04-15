@@ -979,6 +979,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
 
             }
         });
+        return ՐՏ_1;
     })(), ՐՏ_1);
     var ՐՏ_mod = ՐՏ_modules["ՐՏ:asset.fs"];
     ՐՏ_mod.export("FS_local_keeper", function(){return FS_local_keeper;}, function(ՐՏ_v){if (typeof FS_local_keeper !== "undefined") {FS_local_keeper = ՐՏ_v;};});
@@ -1272,6 +1273,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: unpack_name_fun_opt(ՐՏ_14.prototype._reg_as)
             }
         });
+        return ՐՏ_14;
     })(), ՐՏ_14);
     var ՐՏ_mod = ՐՏ_modules["ՐՏ:asset.rs_vue"];
     ՐՏ_mod.export("is_hook", function(){return is_hook;}, function(ՐՏ_v){if (typeof is_hook !== "undefined") {is_hook = ՐՏ_v;};});
@@ -3020,15 +3022,15 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 ret = Object.assign({
                     _type: "v-def"
                 }, self.parse_tag());
-            } else if (S.match(/^\s*\+{3}/, true)) {
+            } else if (S.match(/^\s*@\{/, true)) {
                 ret = {
                     _type: "beg",
-                    value: "+++"
+                    value: "@{"
                 };
-            } else if (S.match(/^\s*---/, true)) {
+            } else if (S.match(/^\s*\}@/, true)) {
                 ret = {
                     _type: "end",
-                    value: "---"
+                    value: "}@"
                 };
             } else {
                 ret = Object.assign({
@@ -3142,7 +3144,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 }
                 if (token._type === "beg") {
                     if (!sol) {
-                        self.raise_err("Unexpected placement of `+++`");
+                        self.raise_err("Unexpected placement of `@{`");
                     }
                     self.eol_or_comment_expect();
                     chunk = self.chunk_tbl[node.name];
@@ -3155,7 +3157,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     }
                     if (node["%verbatim"] || chunk && chunk["%verbatim"]) {
                         S._next_line();
-                        node.child_nodes = [ self.read_verbatim(/^---\s*#*.*$/) ];
+                        node.child_nodes = [ self.read_verbatim(/^\}@\s*#*.*$/) ];
                         node.scoped_by = "beg_end";
                         node.scope_level = self.cur_level;
                     } else {
@@ -3163,10 +3165,10 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     }
                 } else if (token._type === "end") {
                     if (!sol || ((ՐՏ_16 = parent.scope_level) !== (ՐՏ_17 = self.cur_level) && (typeof ՐՏ_16 !== "object" || !ՐՏ_eq(ՐՏ_16, ՐՏ_17)))) {
-                        self.raise_err("Unexpected placement of `---`");
+                        self.raise_err("Unexpected placement of `}@`");
                     }
                     if (parent.scoped_by !== "beg_end") {
-                        self.raise_err("Mismatched end block `---`");
+                        self.raise_err("Mismatched end block `}@`");
                     }
                     parent = self.walk_up(parent, 1);
                     child_nodes = parent.child_nodes;
@@ -4282,7 +4284,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     }
                     offset = (ՐՏ_35 = self.scopes)[ՐՏ_35.length-1].offset;
                 } else if (/^('|")/.test(type)) {
-                } else if (type.endsWith("---")) {
+                } else if (type.endsWith("}@")) {
                     offset = (ՐՏ_36 = self.scopes)[ՐՏ_36.length-1].offset;
                 } else {
                     if (!stream.match(/^(\s|#.*)*$/, false)) {
@@ -4316,9 +4318,9 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 }
                 if (current === "@") {
                     self.js_str_expect = true;
-                    return stream.match(identifiers, false) ? "meta" : ERRORCLASS;
+                    return stream.match(identifiers, false) ? "metasym" : ERRORCLASS;
                 }
-                if ((style === "variable" || style === "builtin") && self.lastStyle === "meta") {
+                if ((style === "variable" || style === "builtin") && self.lastStyle === "metasym") {
                     style = "meta";
                 }
                 scope = (ՐՏ_40 = self.scopes)[ՐՏ_40.length-1];
@@ -4403,23 +4405,23 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 }
                 r = null;
                 if (!(local_state = state.local_state) && (mode_name = get_mode())) {
-                    if (stream.indentation() >= scope.offset || ((ՐՏ_46 = scope.offset - indentUnit) === (ՐՏ_47 = stream.indentation()) || typeof ՐՏ_46 === "object" && ՐՏ_eq(ՐՏ_46, ՐՏ_47)) && (r = stream.match(/^(\s*)\+{3}(\s|#.*)*$/))) {
+                    if (stream.indentation() >= scope.offset || ((ՐՏ_46 = scope.offset - indentUnit) === (ՐՏ_47 = stream.indentation()) || typeof ՐՏ_46 === "object" && ՐՏ_eq(ՐՏ_46, ՐՏ_47)) && (r = stream.match(/^(\s*)@\{(\s|#.*)*$/))) {
                         mode = CodeMirror.getMode(conf, mode_name);
                         state.local_state = CodeMirror.startState(mode, stream.indentation());
                         state.local_mode = mode;
                     }
                     if (r) {
                         rml_mode.load_state(state);
-                        rml_mode.push_scope(stream, r[1] + "---");
+                        rml_mode.push_scope(stream, r[1] + "}@");
                         rml_mode.update_state(state);
-                        return "operator";
+                        return "meta";
                     }
-                } else if (local_state && !(local_state.tokenize && local_state.tokenize.isString) && (scope.type === "tag" && stream.indentation() < scope.offset || scope.type.endsWith("---") && (r = stream.match(new RegExp("^" + scope.type + "(\\s*|#.*)*$"))))) {
+                } else if (local_state && !(local_state.tokenize && local_state.tokenize.isString) && (scope.type === "tag" && stream.indentation() < scope.offset || scope.type.endsWith("}@") && (r = stream.match(new RegExp("^" + scope.type + "(\\s*|#.*)*$"))))) {
                     state.local_state = null;
                     state.local_mode = null;
                     if (r) {
                         state.scopes.pop();
-                        return "operator";
+                        return "meta";
                     }
                 }
             }
@@ -4793,9 +4795,9 @@ var ՐՏ_modules = ՐՏ_def_modules();
                     return style;
                 }
                 if (current === "@") {
-                    return stream.match(identifiers, false) ? "meta" : ERRORCLASS;
+                    return stream.match(identifiers, false) ? "metasym" : ERRORCLASS;
                 }
-                if ((style === "variable" || style === "builtin") && self.lastStyle === "meta") {
+                if ((style === "variable" || style === "builtin") && self.lastStyle && self.lastStyle.startsWith("meta")) {
                     style = "meta";
                 }
                 if ((ՐՏ_67 = self.scopes)[ՐՏ_67.length-1].type === "py" && (current === "pass" || current === "return")) {
@@ -5071,6 +5073,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: asyncer(ՐՏ_81.prototype.async_ok)
             }
         });
+        return ՐՏ_81;
     })(), ՐՏ_81);
     function make() {
         return new Login();
@@ -5131,6 +5134,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.meth(ՐՏ_82.prototype.open_file)
             }
         });
+        return ՐՏ_82;
     })(), ՐՏ_82);
     function make() {
         return new CError();
@@ -5315,6 +5319,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.watch(ՐՏ_83.prototype.shown)
             }
         });
+        return ՐՏ_83;
     })(), ՐՏ_83);
     function make() {
         return new Folder_content();
@@ -5500,6 +5505,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.meth(ՐՏ_84.prototype.go_error)
             }
         });
+        return ՐՏ_84;
     })(), ՐՏ_84);
     function make() {
         return new Editor();
@@ -5633,6 +5639,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.watch(ՐՏ_87.prototype.is_active)
             }
         });
+        return ՐՏ_87;
     })(), ՐՏ_87);
     dialog = Vue.extend(new Dialog());
     function make() {
@@ -5765,6 +5772,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.computed(ՐՏ_88.prototype.result)
             }
         });
+        return ՐՏ_88;
     })(), ՐՏ_88);
     function make() {
         return new Search_view();
@@ -5969,6 +5977,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.watch("modal_state.is_active")(ՐՏ_92.prototype.modal_handler)
             }
         });
+        return ՐՏ_92;
     })(), ՐՏ_92);
     function make() {
         return new Layout();
@@ -7052,6 +7061,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: asyncer(ՐՏ_93.prototype.load_theme_list)
             }
         });
+        return ՐՏ_93;
     })(), ՐՏ_93);
     store = new RS_store(EDITOR_DEFSTATE, vc, new Editor());
     if (__name__ === "__main__") {
@@ -7401,6 +7411,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.action(catch_error(asyncer(ՐՏ_99.prototype.doit)))
             }
         });
+        return ՐՏ_99;
     })(), ՐՏ_99);
     store = new RS_store(DEFSTATE, vc, new Explorer());
     if (__name__ === "__main__") {
@@ -7429,8 +7440,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
             self.baseURL = baseURL;
             self.srv = axios.create({
                 baseURL: baseURL,
-                timeout: 6e4,
-                withCredentials: true
+                timeout: 6e4
             });
             self.last_resp = "";
             self.last_error = "";
@@ -7727,7 +7737,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 $flash: self.$flash.bind(self),
                 $start_modal: self.$start_modal.bind(self)
             }, (function(){
-                Object.defineProperties(ՐՏ_103, {
+Object.defineProperties(ՐՏ_103, {
                     $router: {
                         enumerable: true, 
                         configurable: true, 
@@ -7745,6 +7755,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                         }
                     }
                 });
+                return ՐՏ_103;
             })(), ՐՏ_103);
         }
         save_local (prop, value) {
@@ -8329,6 +8340,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: vc.action(asyncer(ՐՏ_102.prototype.compile))
             }
         });
+        return ՐՏ_102;
     })(), ՐՏ_102);
     function make(params) {
         return new RS_store(default_state(), vc, new Root(params));
@@ -8495,6 +8507,7 @@ var ՐՏ_modules = ՐՏ_def_modules();
                 value: common.asyncer(ՐՏ_105.prototype.mounted)
             }
         });
+        return ՐՏ_105;
     })(), ՐՏ_105);
     function start(el, params) {
         var app;

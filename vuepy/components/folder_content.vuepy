@@ -92,7 +92,7 @@ v-def templ_folder_content:
 
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 from asset.common import blur_click_listener
 
@@ -204,3 +204,4 @@ class Folder_content(RS_vue):
 
 def make():
     return Folder_content()
+}@

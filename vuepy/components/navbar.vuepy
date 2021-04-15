@@ -43,7 +43,7 @@ v-def templ:
 
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 
 vc = V_collector()
@@ -74,3 +74,4 @@ class Navbar(RS_vue):
 
 def make():
     return Navbar()
+}@

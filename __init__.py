@@ -4,7 +4,7 @@ from py4web.core import Fixture, Reloader
 from pydal.validators import CRYPT
 from . import fs2json
 
-__static_version__ = '1.0.2'
+__static_version__ = '1.0.3'
 
 session = Session()
 
@@ -64,11 +64,11 @@ def get_fs(w23p_app = None):
     if not (w23p_app and app_rex.match(w23p_app)):
         return dict()
 
-    file_mask = re.compile('(.(?!\.min))+.\.(js|py|css|html|vuepy|pyj)$', flags= re.I)
+    file_mask = re.compile('(.+?(?!\.min))\.(js|py|css|html|vuepy|pyj)$', flags= re.I)
     dir_list = {
         'controllers':'*',
         'static': {
-            'js': '*', #{},
+            'js': {},
             'css': '*',
             'components': '*',
         },
@@ -78,7 +78,7 @@ def get_fs(w23p_app = None):
         'templates':'*',
         'vuepy':'*',
         #'RapydScript':{'src':'*', 'test':'*'},
-        'RapydScript':'*',
+        #'RapydScript':'*',
     }
     app_folder = os.path.join(APPS_FOLDER, w23p_app)
     ret = fs2json.dir_to_fs(app_folder, dir_list, file_mask)

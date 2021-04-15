@@ -21,7 +21,7 @@ v-def templ_login:
                 button(class = 'button is-primary', @click.stop.prevent = 'ok'):'OK'
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import V_collector,  RS_vue
 from asset.common import asyncer
 
@@ -51,4 +51,4 @@ class Login(RS_vue):
 def make():
     return Login()
 
----
+}@

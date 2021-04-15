@@ -7,7 +7,7 @@ class API:
         self.srv = axios.create({
               baseURL: baseURL,
               timeout: 60000,
-              withCredentials: True
+              #withCredentials: True
             })
         self.last_resp =''
         self.last_error =''

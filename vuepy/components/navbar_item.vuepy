@@ -1,5 +1,5 @@
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 import click_out
 
@@ -104,3 +104,4 @@ class Navbar_item(RS_vue):
 
 def make():
     return Navbar_item()
+}@

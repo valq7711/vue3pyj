@@ -13,7 +13,7 @@ v-def templ:
                 button(class = 'button is-primary', @click = '$emit("close", "cancel")'):'Cancel'
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 #from components import modal_b as modal
 
@@ -31,4 +31,4 @@ class App_selector(RS_vue):
 def make():
     return App_selector()
 
----
+}@

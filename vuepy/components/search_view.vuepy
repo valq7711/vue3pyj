@@ -28,7 +28,7 @@ v-def templ:
 
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import V_collector, RS_vue
 
 vc = V_collector()
@@ -87,3 +87,4 @@ class Search_view(RS_vue):
 def make():
     return Search_view()
 
+}@

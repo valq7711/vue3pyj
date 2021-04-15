@@ -297,10 +297,10 @@ class Parser:
             ret = Object.assign({_type: 'def'}, self.parse_tag())
         elif S.match(/^\s*v-def\s+/, True):
             ret = Object.assign({_type: 'v-def'}, self.parse_tag())
-        elif S.match(/^\s*\+{3}/, True):
-            ret = {_type: 'beg', value: '+++'}
-        elif S.match(/^\s*---/, True):
-            ret = {_type: 'end', value: '---'}
+        elif S.match(/^\s*@\{/, True):
+            ret = {_type: 'beg', value: '@{'}
+        elif S.match(/^\s*\}@/, True):
+            ret = {_type: 'end', value: '}@'}
         else:
             ret = Object.assign({_type: 'tag'}, self.parse_tag())
         start_end.e = [S.line, S.col, S.pos()]
@@ -387,7 +387,7 @@ class Parser:
                 push_scope(node)
             if token._type == 'beg':
                 if not sol:
-                    self.raise_err('Unexpected placement of `+++`')
+                    self.raise_err('Unexpected placement of `@{`')
                 self.eol_or_comment_expect()
                 chunk = self.chunk_tbl[node.name]
                 compiler = node['%compiler'] or chunk and chunk['%compiler']
@@ -395,16 +395,16 @@ class Parser:
                     self.compile_requires.push({node: node, compiler: compiler})
                 if node['%verbatim'] or chunk and chunk['%verbatim']:
                     S._next_line()
-                    node.child_nodes = [self.read_verbatim(/^---\s*#*.*$/)]
+                    node.child_nodes = [self.read_verbatim(/^\}@\s*#*.*$/)]
                     node.scoped_by = 'beg_end'
                     node.scope_level = self.cur_level
                 else:
                     push_scope(node, 'beg_end', self.cur_level)
             elif token._type == 'end':
                 if not sol or parent.scope_level != self.cur_level:
-                    self.raise_err('Unexpected placement of `---`')
+                    self.raise_err('Unexpected placement of `}@`')
                 if parent.scoped_by != 'beg_end':
-                    self.raise_err('Mismatched end block `---`')
+                    self.raise_err('Mismatched end block `}@`')
                 parent = self.walk_up(parent, 1)
                 child_nodes = parent.child_nodes
             elif token._type == 'comment':

@@ -12,7 +12,7 @@ v-def templ:
 
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 
 vc = V_collector()
@@ -25,3 +25,4 @@ class Dropdown(RS_vue):
 
 def make():
     return Dropdown()
+}@

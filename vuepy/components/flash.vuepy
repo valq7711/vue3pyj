@@ -10,7 +10,7 @@ v-def templ:
                 slot(v-else):
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 async import Vue
 
@@ -105,4 +105,4 @@ def open(opt, parent):
     vm.$mount(el)
     return vm
 
----
+}@

@@ -71,7 +71,7 @@ v-def modal_demo:
 
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import V_collector, RS_vue
 from components import modal, search_view
 
@@ -182,3 +182,4 @@ class Layout(RS_vue):
 def  make():
     return Layout()
 
+}@

@@ -28,7 +28,7 @@ v-def templ_dialog:
                 button(v-if = "type == 'confirm'", class = 'button', @click.stop.prevent = "$emit('cancel')"):'{{cancel_text}}'
 
 v-pyj:
-+++
+@{
 from asset.rs_vue import RS_vue, V_collector
 async import Vue
 
@@ -136,3 +136,4 @@ def open(parent, opt):
         )
     return p
 
+}@

@@ -287,10 +287,10 @@ def def_mode(conf, parserConf):
 
             # Handle decorators
             if current == "@":
-                return stream.match(identifiers, False) ? "meta" : ERRORCLASS
+                return stream.match(identifiers, False) ? "metasym" : ERRORCLASS
 
             if (style == "variable" or style == "builtin") \
-                    and self.lastStyle == "meta":
+                    and self.lastStyle and self.lastStyle.startsWith("meta"):
                 style = "meta"
 
             # Handle scope changes
