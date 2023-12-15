@@ -1,6 +1,8 @@
 import os, re
-from py4web import action, abort, request, Session, URL
-from py4web.core import Fixture, Reloader
+from py4web import (HTTP, URL, Translator, __version__, abort, action,
+                    redirect, request, response)
+from py4web.core import (DAL, Fixture, Reloader, Session, dumps, error_logger,
+                         safely)
 from pydal.validators import CRYPT
 from . import fs2json
 
@@ -8,15 +10,14 @@ __static_version__ = '1.0.3'
 
 session = Session()
 
-
 class Logged(Fixture):
     def __init__(self, session):
         self.__prerequisites__ = [session]
         self.session = session
 
-    def on_request(self):
-        user = self.session.get('user')
-        if not user or not user.get('id'):
+    def on_request(self, context):
+        user = self.session.get("user")
+        if not user or not user.get("id"):
             abort(403)
 
 session_secured = action.uses(Logged(session))
